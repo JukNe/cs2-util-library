@@ -1,0 +1,36 @@
+.map-grid {
+    display: grid;
+    justify-content: center;
+    grid-template-columns: repeat(4, minmax(0, 15%));
+    gap: 2em;
+    padding: 2em;
+}
+
+.map-item {
+    display: flex;
+    position: relative;
+    width: 15em;
+    height: 15em;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    border-radius: 10px;
+}
+
+.map-item:hover {
+    scale: 1.1;
+}
+
+.map-item-inner {
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    font-size: 24px;
+    font-weight: bold;
+    -webkit-text-stroke: 1px black;
+    bottom: 10%;
+}
+
+.map-item-icon {
+    margin: auto;
+}

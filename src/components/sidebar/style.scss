@@ -1,0 +1,20 @@
+.sidebar {
+    background-color: navy;
+    padding: 1em;
+}
+
+
+.sidebar-link {
+    display: flex;
+    font-size: 18px;
+    padding: .5em;
+    border: 3px solid white;
+    border-radius: 10px;
+    margin-top: 1em;
+    align-items: center;
+    gap: .5em;
+}
+
+.sidebar-link:hover {
+    background-color: blue;
+}
