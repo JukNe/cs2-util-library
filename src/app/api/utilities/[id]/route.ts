@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validateSession } from '@/lib/session';
 import prisma from '@/lib/prisma';
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         // Validate session
         const sessionValidation = await validateSession(request);
@@ -10,7 +10,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        const utilityId = params.id;
+        const { id: utilityId } = await params;
 
         // Check if utility exists
         const utility = await prisma.utility.findUnique({
