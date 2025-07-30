@@ -1,4 +1,4 @@
-import { TUtilityLandingPoint, TUtilityThrowingPoint } from '@/types/utilities';
+import { TUtilityLandingPoint } from '@/types/utilities';
 import prisma from './prisma';
 
 export async function getMapData(mapName: string, userId?: string): Promise<TUtilityLandingPoint[]> {
@@ -20,7 +20,10 @@ export async function getMapData(mapName: string, userId?: string): Promise<TUti
     }
 
     // Build the where clause for utilities
-    const whereClause: any = {
+    const whereClause: {
+      mapId: string;
+      createdBy?: string;
+    } = {
       mapId: map.id
     };
 

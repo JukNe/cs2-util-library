@@ -1,4 +1,4 @@
-import { put, del, head } from '@vercel/blob';
+import { put, del, head, PutBlobResult } from '@vercel/blob';
 import prisma from './prisma';
 import { Media } from '@/generated/prisma/index';
 
@@ -13,7 +13,7 @@ export interface UploadBlobOptions {
 }
 
 export interface BlobUploadResult {
-  blob: any; // Vercel blob result
+  blob: PutBlobResult; // Vercel blob result
   media: Media; // Prisma media record
 }
 
