@@ -1,0 +1,245 @@
+.media-uploader {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.drop-zone {
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #fafafa;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  outline: none;
+
+  &:hover {
+    border-color: #4CAF50;
+    background: #f0f8f0;
+  }
+
+  &:focus {
+    border-color: #2196F3;
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+  }
+
+  &.drag-over {
+    border-color: #4CAF50;
+    background: #e8f5e8;
+    transform: scale(1.02);
+  }
+
+  &.file-selected {
+    border-color: #2196F3;
+    background: #f0f8ff;
+  }
+}
+
+.upload-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+
+  .upload-icon {
+    color: #999;
+    transition: color 0.3s ease;
+  }
+
+  .upload-text {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #666;
+  }
+
+  .upload-hint {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #999;
+  }
+}
+
+.file-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+
+  .file-name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #333;
+    word-break: break-all;
+    max-width: 100%;
+    text-align: center;
+  }
+
+  .file-size {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #666;
+  }
+
+  .upload-button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+
+    &:hover:not(:disabled) {
+      background: #45a049;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(76, 175, 80, 0.4);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    &:focus {
+      outline: 2px solid #4CAF50;
+      outline-offset: 2px;
+    }
+  }
+
+  .remove-button {
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #d32f2f;
+      transform: translateY(-1px);
+    }
+
+    &:focus {
+      outline: 2px solid #f44336;
+      outline-offset: 2px;
+    }
+  }
+}
+
+.upload-error {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #ffebee;
+  border: 1px solid #f44336;
+  border-radius: 6px;
+  text-align: center;
+
+  p {
+    margin: 0;
+    color: #c62828;
+    font-weight: 500;
+  }
+}
+
+.upload-success {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #e8f5e8;
+  border: 1px solid #4CAF50;
+  border-radius: 6px;
+  text-align: center;
+
+  p {
+    margin: 0.25rem 0;
+    color: #2e7d32;
+  }
+
+  a {
+    color: #4CAF50;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #2e7d32;
+      text-decoration: underline;
+    }
+
+    &:focus {
+      outline: 2px solid #4CAF50;
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .drop-zone {
+    padding: 1.5rem;
+    min-height: 150px;
+  }
+
+  .upload-prompt {
+    .upload-text {
+      font-size: 1rem;
+    }
+
+    .upload-hint {
+      font-size: 0.8rem;
+    }
+  }
+
+  .file-preview {
+    .upload-button {
+      padding: 0.6rem 1.2rem;
+      font-size: 0.9rem;
+    }
+
+    .remove-button {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .drop-zone {
+    padding: 1rem;
+    min-height: 120px;
+  }
+
+  .upload-prompt {
+    .upload-icon {
+      font-size: 2.5em;
+    }
+
+    .upload-text {
+      font-size: 0.9rem;
+    }
+
+    .upload-hint {
+      font-size: 0.75rem;
+    }
+  }
+}

@@ -1,0 +1,139 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  createdAt       DateTime  @default(now())
+  email           String    @unique
+  name            String
+  password        String
+  emailVerified   Boolean   @default(false)
+  emailVerifiedAt DateTime?
+  image           String?
+  updatedAt       DateTime  @default(now())
+  sessions        Session[]
+  accounts        Account[]
+  utilities       Utility[] // User can create utilities
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String    @default(cuid())
+  providerId            String    @default("credentials")
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @default(now())
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
+
+model Map {
+  id          String    @id @default(cuid())
+  name        String    @unique // e.g., 'dust2', 'mirage', 'nuke', etc.
+  displayName String // e.g., 'Dust II', 'Mirage', 'Nuke'
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  utilities   Utility[] // Map has many utilities
+
+  @@map("map")
+}
+
+model Utility {
+  id             String          @id @default(cuid())
+  mapId          String
+  map            Map             @relation(fields: [mapId], references: [id], onDelete: Cascade)
+  utilityType    String // e.g., 'smoke', 'flash', 'molotov', 'HE'
+  team           String          @default("T") // 'T' for Terrorist, 'CT' for Counter-Terrorist
+  landingPointX  Float // X coordinate of utility landing point
+  landingPointY  Float // Y coordinate of utility landing point
+  title          String // Title of the utility
+  description    String? // Optional description
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  createdBy      String? // User ID who created this utility
+  user           User?           @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  throwingPoints ThrowingPoint[] // Utility can have multiple throwing points
+  media          Media[] // Utility can have multiple media files
+
+  @@map("utility")
+}
+
+model ThrowingPoint {
+  id          String   @id @default(cuid())
+  utilityId   String
+  utility     Utility  @relation(fields: [utilityId], references: [id], onDelete: Cascade)
+  positionX   Float // X coordinate of throwing point
+  positionY   Float // Y coordinate of throwing point
+  title       String // Title for this throwing point
+  description String? // Optional description
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  media       Media[] // Throwing point can have multiple media files
+
+  @@map("throwing_point")
+}
+
+model Media {
+  id              String         @id @default(cuid())
+  url             String // URL to the media file
+  type            String // e.g., 'image', 'video', 'gif'
+  title           String? // Optional title for the media
+  description     String? // Optional description
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  utilityId       String? // Optional: media can belong to a utility
+  utility         Utility?       @relation(fields: [utilityId], references: [id], onDelete: Cascade)
+  throwingPointId String? // Optional: media can belong to a throwing point
+  throwingPoint   ThrowingPoint? @relation(fields: [throwingPointId], references: [id], onDelete: Cascade)
+
+  @@map("media")
+}
