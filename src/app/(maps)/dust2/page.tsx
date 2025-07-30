@@ -1,16 +1,14 @@
 import MapViewer from '@/components/mapViewer';
+import { getMapData } from '@/lib/map-data';
+import { TUtilityLandingPoint } from '@/types/utilities';
 
 const Dust2 = async () => {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/maps/dust2`, {
-        cache: 'no-store'
-    });
+    let data: TUtilityLandingPoint[] = [];
 
-    let data = [];
-    if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-            data = result.data;
-        }
+    try {
+        data = await getMapData('dust2');
+    } catch (error) {
+        console.error('Error fetching dust2 data:', error);
     }
 
     return (

@@ -17,7 +17,7 @@ const NukeDetail = ({ params }: PageProps) => {
         const fetchData = async () => {
             try {
                 const resolvedParams = await params;
-                const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/maps/nuke`, {
+                const response = await fetch(`/api/maps/nuke`, {
                     cache: 'no-store'
                 });
 

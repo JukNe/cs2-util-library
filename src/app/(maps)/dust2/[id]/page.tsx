@@ -17,7 +17,7 @@ const Dust2Detail = ({ params }: PageProps) => {
         const fetchData = async () => {
             try {
                 const resolvedParams = await params;
-                const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/maps/dust2`, {
+                const response = await fetch(`/api/maps/dust2`, {
                     cache: 'no-store'
                 });
 

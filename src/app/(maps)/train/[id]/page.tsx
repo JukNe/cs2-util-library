@@ -17,7 +17,7 @@ const TrainDetail = ({ params }: PageProps) => {
         const fetchData = async () => {
             try {
                 await params; // Await to handle the Promise but don't use the result
-                const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/maps/train`, {
+                const response = await fetch(`/api/maps/train`, {
                     cache: 'no-store'
                 });
 

@@ -40,6 +40,7 @@ const MapViewerInner = (props: MapViewerProps) => {
     const [isSavingTitle, setIsSavingTitle] = useState(false)
     const [pendingMediaChanges, setPendingMediaChanges] = useState<Record<string, string>>({})
     const [hoveredTPMedia, setHoveredTPMedia] = useState<unknown[]>([])
+    const [mediaCache, setMediaCache] = useState<Record<string, unknown[]>>({})
     const { utilityFilter } = useContext(UtilityFilterContext)
     const utilityViewerRef = useRef<UtilityViewerRef>(null)
 
@@ -302,7 +303,12 @@ const MapViewerInner = (props: MapViewerProps) => {
 
     const handleLPClick = (data: TUtilityLandingPoint, e: React.MouseEvent) => {
         e.stopPropagation();
-        setSelectedLP(data);
+        // Toggle selection: if clicking the same landing point, deselect it
+        if (selectedLP === data) {
+            setSelectedLP(undefined);
+        } else {
+            setSelectedLP(data);
+        }
         setSelectedTP(undefined);
         setIsModalOpen(false);
     };
@@ -398,8 +404,17 @@ const MapViewerInner = (props: MapViewerProps) => {
 
         // Set new timeout
         const timeout = setTimeout(() => {
+            const throwingPointId = data.id;
+            if (!throwingPointId) return;
+
+            // Check if media is already cached
+            if (mediaCache[throwingPointId]) {
+                setHoveredTPMedia(mediaCache[throwingPointId]);
+                return;
+            }
+
             // Fetch media for this throwing point
-            fetch(`/api/media/get?throwingPointId=${data.id}`, {
+            fetch(`/api/media/get?throwingPointId=${throwingPointId}`, {
                 credentials: 'include'
             }).then(response => {
                 if (response.ok) {
@@ -407,11 +422,20 @@ const MapViewerInner = (props: MapViewerProps) => {
                 }
                 throw new Error('Failed to fetch media');
             }).then(result => {
-                if (result.success) {
-                    setHoveredTPMedia(result.data);
-                }
+                const media = result.media || [];
+                // Cache the media data
+                setMediaCache(prev => ({
+                    ...prev,
+                    [throwingPointId]: media
+                }));
+                setHoveredTPMedia(media);
             }).catch(error => {
                 console.error('Error fetching media:', error);
+                // Cache empty array to avoid repeated failed requests
+                setMediaCache(prev => ({
+                    ...prev,
+                    [throwingPointId]: []
+                }));
                 setHoveredTPMedia([]);
             });
         }, 500);
@@ -755,7 +779,7 @@ const MapViewerInner = (props: MapViewerProps) => {
             }
 
             {/* Hover Preview */}
-            {hoveredTP && hoveredTPMedia.length > 0 && (
+            {hoveredTP && (
                 <div
                     className="hover-preview"
                     style={{
@@ -770,43 +794,122 @@ const MapViewerInner = (props: MapViewerProps) => {
                         pointerEvents: 'none'
                     }}
                 >
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                        {hoveredTPMedia.slice(0, 4).map((media: unknown, index: number) => (
-                            <div
-                                key={index}
-                                style={{
-                                    width: '40px',
-                                    height: '40px',
-                                    backgroundColor: '#333',
-                                    borderRadius: '4px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '12px',
-                                    color: '#fff'
-                                }}
-                            >
-                                {typeof media === 'object' && media && 'type' in media && media.type === 'image' ? 'IMG' : 'VID'}
-                            </div>
-                        ))}
-                        {hoveredTPMedia.length > 4 && (
-                            <div
-                                style={{
-                                    width: '40px',
-                                    height: '40px',
-                                    backgroundColor: '#333',
-                                    borderRadius: '4px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '12px',
-                                    color: '#fff'
-                                }}
-                            >
-                                +{hoveredTPMedia.length - 4}
+                    {/* Throwing Point Info */}
+                    <div style={{ marginBottom: '8px' }}>
+                        <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>
+                            {hoveredTP.title}
+                        </div>
+                        {hoveredTP.description && (
+                            <div style={{ color: '#ccc', fontSize: '12px', marginTop: '4px' }}>
+                                {hoveredTP.description}
                             </div>
                         )}
                     </div>
+
+                    {/* Media Preview (if any) */}
+                    {hoveredTPMedia.length > 0 && (
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                            {/* Show first media file */}
+                            {(() => {
+                                const firstMedia = hoveredTPMedia[0] as any;
+                                if (firstMedia && firstMedia.url) {
+                                    if (firstMedia.type === 'image') {
+                                        return (
+                                            <div
+                                                style={{
+                                                    width: '120px',
+                                                    height: '80px',
+                                                    borderRadius: '4px',
+                                                    overflow: 'hidden',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >
+                                                <img
+                                                    src={firstMedia.url}
+                                                    alt="Media preview"
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        objectFit: 'cover'
+                                                    }}
+                                                />
+                                            </div>
+                                        );
+                                    } else if (firstMedia.type === 'video') {
+                                        return (
+                                            <div
+                                                style={{
+                                                    width: '120px',
+                                                    height: '80px',
+                                                    backgroundColor: '#333',
+                                                    borderRadius: '4px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    position: 'relative'
+                                                }}
+                                            >
+                                                <video
+                                                    src={firstMedia.url}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        objectFit: 'cover'
+                                                    }}
+                                                    muted
+                                                    loop
+                                                    autoPlay
+                                                />
+                                                <div
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: '4px',
+                                                        right: '4px',
+                                                        backgroundColor: 'rgba(0,0,0,0.7)',
+                                                        color: '#fff',
+                                                        fontSize: '10px',
+                                                        padding: '2px 4px',
+                                                        borderRadius: '2px'
+                                                    }}
+                                                >
+                                                    VID
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                }
+                                return null;
+                            })()}
+
+                            {/* Show remaining media count if more than 1 */}
+                            {hoveredTPMedia.length > 1 && (
+                                <div
+                                    style={{
+                                        width: '40px',
+                                        height: '40px',
+                                        backgroundColor: '#333',
+                                        borderRadius: '4px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '12px',
+                                        color: '#fff'
+                                    }}
+                                >
+                                    +{hoveredTPMedia.length - 1}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* No Media Message */}
+                    {hoveredTPMedia.length === 0 && (
+                        <div style={{ color: '#999', fontSize: '12px', fontStyle: 'italic' }}>
+                            No media attached
+                        </div>
+                    )}
                 </div>
             )}
 

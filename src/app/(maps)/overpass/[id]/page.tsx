@@ -17,7 +17,7 @@ const OverpassDetail = ({ params }: PageProps) => {
         const fetchData = async () => {
             try {
                 const resolvedParams = await params;
-                const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/maps/overpass`, {
+                const response = await fetch(`/api/maps/overpass`, {
                     cache: 'no-store'
                 });
 

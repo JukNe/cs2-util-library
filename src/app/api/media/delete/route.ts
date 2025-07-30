@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { deleteBlobFromDatabase } from '@/lib/blob-storage';
-import { auth } from '@/lib/auth';
+import { validateSession } from '@/lib/session';
 import prisma from '@/lib/prisma';
 
 export async function DELETE(request: NextRequest) {
@@ -12,16 +12,16 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: 'Media ID is required' }, { status: 400 });
         }
 
-        // Get the current user session
-        const session = await auth.api.getSession({ headers: request.headers });
-        const userId = session?.user?.id;
-
-        if (!userId) {
+        // Validate session
+        const sessionValidation = await validateSession(request);
+        if (!sessionValidation.success) {
             return NextResponse.json({
                 success: false,
                 error: 'User not authenticated'
             }, { status: 401 });
         }
+
+        const userId = sessionValidation.userId;
 
         // Get the media and verify the user owns it
         const media = await prisma.media.findUnique({
