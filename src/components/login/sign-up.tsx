@@ -69,6 +69,7 @@ export const SignUp = ({ onBackToLogin }: SignUpProps) => {
                 setFormError(res.error ?? "An unknown error occurred.");
             } else {
                 console.log('Signup successful!');
+                console.log('Response cookies:', response.headers.get('set-cookie'));
 
                 // Show success message and redirect to home page
                 setSuccessMessage('Account created successfully! You are now signed in.');
@@ -77,8 +78,10 @@ export const SignUp = ({ onBackToLogin }: SignUpProps) => {
                 window.dispatchEvent(new Event('auth-status-changed'));
                 localStorage.setItem('auth-status', 'logged-in');
 
+                // Force a page reload to ensure the session is properly recognized
                 setTimeout(() => {
-                    router.push('/');
+                    console.log('Redirecting to home page...');
+                    window.location.href = '/';
                 }, 1500); // Redirect after 1.5 seconds
             }
         } catch (error) {

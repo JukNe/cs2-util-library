@@ -343,25 +343,41 @@ const MapViewerInner = (props: MapViewerProps) => {
         e.stopPropagation();
         if (!selectedLP) return;
 
+        // Show confirmation dialog
+        const confirmed = window.confirm(
+            `Are you sure you want to delete this ${selectedLP.utilityType} landing point?\n\nThis will also delete all ${selectedLP.throwingPoints.length} throwing point(s) and their associated media.`
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        console.log('Deleting landing point:', selectedLP.id);
+
         try {
             const response = await fetch(`/api/utilities/${selectedLP.id}`, {
                 method: 'DELETE',
                 credentials: 'include'
             });
 
+            console.log('Delete response status:', response.status);
+
             if (response.ok) {
                 const result = await response.json();
+                console.log('Delete response:', result);
                 if (result.success) {
                     setUtility((previous) => previous.filter(item => item !== selectedLP))
                     setSelectedLP(undefined);
                     setSelectedTP(undefined);
                     setIsModalOpen(false);
+                    console.log('Landing point deleted successfully');
                 } else {
                     console.error('Failed to delete landing point:', result.error);
                     alert('Failed to delete landing point. Please try again.');
                 }
             } else {
-                console.error('Failed to delete landing point');
+                const errorText = await response.text();
+                console.error('Failed to delete landing point:', response.status, errorText);
                 alert('Failed to delete landing point. Please try again.');
             }
         } catch (error) {
@@ -373,6 +389,15 @@ const MapViewerInner = (props: MapViewerProps) => {
     const handleDeleteThrowingPoint = (tp: TUtilityThrowingPoint, e: React.MouseEvent) => {
         e.stopPropagation();
         if (!selectedLP) return;
+
+        // Show confirmation dialog
+        const confirmed = window.confirm(
+            `Are you sure you want to delete this throwing point?\n\nTitle: ${tp.title}\nThis will also delete all associated media.`
+        );
+
+        if (!confirmed) {
+            return;
+        }
 
         try {
             fetch(`/api/utilities/throwing-points/${tp.id}`, {
