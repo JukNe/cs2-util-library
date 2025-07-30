@@ -69,7 +69,15 @@ export async function POST(request: NextRequest) {
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             expires: expiresAt,
-            path: '/'
+            path: '/',
+            maxAge: (rememberMe ? 30 : 7) * 24 * 60 * 60 // Convert days to seconds
+        });
+
+        console.log('Session cookie set:', {
+            token: sessionToken,
+            expires: expiresAt,
+            rememberMe,
+            secure: process.env.NODE_ENV === 'production'
         });
 
         return response;

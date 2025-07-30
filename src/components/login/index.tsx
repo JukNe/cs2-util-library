@@ -62,7 +62,9 @@ const LoginForm = () => {
             window.dispatchEvent(new Event('auth-status-changed'));
             localStorage.setItem('auth-status', 'logged-in');
 
-            router.push("/");
+            // Force a page reload to ensure the session is properly recognized
+            console.log('Redirecting to home page...');
+            window.location.href = '/';
         } catch (err: unknown) {
             console.error('Signin exception:', err);
             setLoading(false);
