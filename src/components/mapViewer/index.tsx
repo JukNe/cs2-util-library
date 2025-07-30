@@ -43,6 +43,8 @@ const MapViewerInner = (props: MapViewerProps) => {
     const [hoveredTPMedia, setHoveredTPMedia] = useState<Media[]>([])
     const [mediaCache, setMediaCache] = useState<Record<string, Media[]>>({})
     const [isLoadingMedia, setIsLoadingMedia] = useState(false)
+    const [isAddingLandingPoint, setIsAddingLandingPoint] = useState(false)
+    const [isAddingThrowingPointLoading, setIsAddingThrowingPointLoading] = useState(false)
     const { utilityFilter } = useContext(UtilityFilterContext)
     const utilityViewerRef = useRef<UtilityViewerRef>(null)
 
@@ -161,6 +163,9 @@ const MapViewerInner = (props: MapViewerProps) => {
 
         if (!img || !selectedNade) return
 
+        // Set loading state
+        setIsAddingLandingPoint(true);
+
         // Calculate click position relative to the image, accounting for zoom and pan
         const imgRect = img.getBoundingClientRect()
         const clickX = (e.clientX - imgRect.left - pan.x) / zoom
@@ -206,9 +211,10 @@ const MapViewerInner = (props: MapViewerProps) => {
         } catch (error) {
             console.error('Error saving utility:', error);
             alert('Error saving utility. Please try again.');
+        } finally {
+            setIsAddingLandingPoint(false);
+            setSelectedNade(undefined);
         }
-
-        setSelectedNade(undefined)
     }
 
     const handleAddThrowingPoint = async (e: React.MouseEvent) => {
@@ -216,6 +222,9 @@ const MapViewerInner = (props: MapViewerProps) => {
 
         const img = document.getElementById('map-image') as HTMLImageElement
         if (!img) return
+
+        // Set loading state
+        setIsAddingThrowingPointLoading(true);
 
         // Calculate click position relative to the image, accounting for zoom and pan
         const imgRect = img.getBoundingClientRect()
@@ -272,9 +281,10 @@ const MapViewerInner = (props: MapViewerProps) => {
         } catch (error) {
             console.error('Error saving throwing point:', error);
             alert('Error saving throwing point. Please try again.');
+        } finally {
+            setIsAddingThrowingPointLoading(false);
+            setIsAddingThrowingPoint(false);
         }
-
-        setIsAddingThrowingPoint(false)
     }
 
     const handleZoomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -878,6 +888,20 @@ const MapViewerInner = (props: MapViewerProps) => {
                     {loading && (
                         <div className="loading-overlay">
                             <div className="loading-spinner">Loading utilities...</div>
+                        </div>
+                    )}
+
+                    {/* Loading indicator for adding landing point */}
+                    {isAddingLandingPoint && (
+                        <div className="loading-overlay">
+                            <div className="loading-spinner">Adding landing point...</div>
+                        </div>
+                    )}
+
+                    {/* Loading indicator for adding throwing point */}
+                    {isAddingThrowingPointLoading && (
+                        <div className="loading-overlay">
+                            <div className="loading-spinner">Adding throwing point...</div>
                         </div>
                     )}
                     <div
