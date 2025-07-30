@@ -746,16 +746,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                     </div>
                     <UtilityPreview
                         ref={utilityViewerRef}
-                        position={
-                            {
-                                X: selectedTP.position.X,
-                                Y: selectedTP.position.Y
-                            }
-                        }
-                        url={selectedTP.url}
-                        description={selectedTP.description}
                         throwingPointId={selectedTP.id}
-                        onDescriptionUpdate={handleDescriptionUpdate}
                         onMediaDescriptionChange={handleMediaDescriptionChange}
                         pendingMediaChanges={pendingMediaChanges}
                         isEditingDescription={isEditingDescription}

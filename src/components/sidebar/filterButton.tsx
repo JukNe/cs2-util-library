@@ -17,7 +17,7 @@ const FilterButton = (props: FilterButtonProps) => {
 
     // Sync local state with context on mount
     useEffect(() => {
-        //@ts-ignore
+        //@ts-expect-error - Dynamic key access to utilityFilter object
         setIsActive(utilityFilter[type] !== false)
     }, [utilityFilter, type])
 

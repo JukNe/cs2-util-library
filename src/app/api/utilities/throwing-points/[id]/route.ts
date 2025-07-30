@@ -74,7 +74,10 @@ export async function PATCH(
         }
 
         // Prepare update data
-        const updateData: any = {};
+        const updateData: {
+            title?: string;
+            description?: string | null;
+        } = {};
         if (title !== undefined) updateData.title = title;
         if (description !== undefined) updateData.description = description;
 

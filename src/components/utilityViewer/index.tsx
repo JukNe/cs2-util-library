@@ -1,26 +1,11 @@
 import './style.scss'
-import { TUtilityThrowingPoint } from '@/types/utilities';
 import MediaCarousel, { MediaCarouselRef } from '../mediaCarousel';
-import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
-import { BsPencil, BsCheck, BsX } from 'react-icons/bs';
+import { useRef, forwardRef, useImperativeHandle } from 'react';
 
 interface UtilityViewerProps {
-    position: {
-        X: number;
-        Y: number;
-    };
-    url: string;
-    description: string;
     utilityId?: string;
     throwingPointId?: string;
-    onDescriptionUpdate?: (newDescription: string) => void;
     isEditingDescription?: boolean;
-    editedDescription?: string;
-    onDescriptionChange?: (description: string) => void;
-    onEditClick?: () => void;
-    onSaveDescription?: () => void;
-    onCancelEdit?: () => void;
-    isSavingDescription?: boolean;
     onMediaDescriptionChange?: (mediaId: string, description: string) => void;
     pendingMediaChanges?: Record<string, string>;
 }
@@ -31,19 +16,9 @@ export interface UtilityViewerRef {
 
 const UtilityViewer = forwardRef<UtilityViewerRef, UtilityViewerProps>((props, ref) => {
     const {
-        position,
-        url,
-        description,
         utilityId,
         throwingPointId,
-        onDescriptionUpdate,
         isEditingDescription = false,
-        editedDescription = '',
-        onDescriptionChange,
-        onEditClick,
-        onSaveDescription,
-        onCancelEdit,
-        isSavingDescription = false,
         onMediaDescriptionChange,
         pendingMediaChanges
     } = props;
@@ -79,5 +54,7 @@ const UtilityViewer = forwardRef<UtilityViewerRef, UtilityViewerProps>((props, r
         </div>
     );
 });
+
+UtilityViewer.displayName = 'UtilityViewer';
 
 export default UtilityViewer;
