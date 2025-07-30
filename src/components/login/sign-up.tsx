@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form"
 import { useRouter } from "next/navigation";
 import Input from "../input";
@@ -10,7 +10,6 @@ type Inputs = {
     email: string;
     password: string;
     passwordConfirmation: string;
-    image?: File | null;
 }
 
 interface SignUpProps {
@@ -18,8 +17,6 @@ interface SignUpProps {
 }
 
 export const SignUp = ({ onBackToLogin }: SignUpProps) => {
-    const [image, setImage] = useState<File | null>(null);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
@@ -27,9 +24,7 @@ export const SignUp = ({ onBackToLogin }: SignUpProps) => {
     const {
         register,
         handleSubmit,
-        watch,
         formState: { errors },
-        clearErrors,
     } = useForm<Inputs>()
 
     const onSubmit = async (formData: Inputs) => {

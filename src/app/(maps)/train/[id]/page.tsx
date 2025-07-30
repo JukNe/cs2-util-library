@@ -16,7 +16,7 @@ const TrainDetail = ({ params }: PageProps) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const resolvedParams = await params;
+                await params; // Await to handle the Promise but don't use the result
                 const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/maps/train`, {
                     cache: 'no-store'
                 });

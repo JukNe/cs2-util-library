@@ -63,7 +63,7 @@ const LoginForm = () => {
             localStorage.setItem('auth-status', 'logged-in');
 
             router.push("/");
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Signin exception:', err);
             setLoading(false);
             setErrorMessage("Invalid email or password.");
@@ -142,7 +142,7 @@ const LoginForm = () => {
                         </button>
                     </form>
                     <div style={{ textAlign: "center", marginTop: 12 }}>
-                        <span>Don't have an account?</span>
+                        <span>Don&apos;t have an account?</span>
                         <button
                             type="button"
                             onClick={() => setIsSignUp(true)}

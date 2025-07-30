@@ -4,7 +4,6 @@ import './style.scss'
 import MapCard from '../mapCard';
 import { useEffect, useState } from 'react';
 import { Maps } from '@/utils/constants';
-import { TUtilityLandingPoint } from '@/types/utilities';
 
 interface MapDataWithCount {
     mapName: string;

@@ -23,7 +23,7 @@ const MapViewerInner = (props: MapViewerProps) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
     const [selectedNade, setSelectedNade] = useState<TUtilityLandingPoint['utilityType']>()
     const [selectedTeam, setSelectedTeam] = useState<string>('T') // Default to Terrorist team
-    const [throwingPointsVisible, setThrowingPointsVisible] = useState(false)
+
     const [selectedTP, setSelectedTP] = useState<TUtilityThrowingPoint>()
     const [selectedLP, setSelectedLP] = useState<TUtilityLandingPoint>()
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -39,8 +39,8 @@ const MapViewerInner = (props: MapViewerProps) => {
     const [editedTitle, setEditedTitle] = useState('')
     const [isSavingTitle, setIsSavingTitle] = useState(false)
     const [pendingMediaChanges, setPendingMediaChanges] = useState<Record<string, string>>({})
-    const [hoveredTPMedia, setHoveredTPMedia] = useState<any[]>([])
-    const { utilityFilter, setUtilityFilter } = useContext(UtilityFilterContext)
+    const [hoveredTPMedia, setHoveredTPMedia] = useState<unknown[]>([])
+    const { utilityFilter } = useContext(UtilityFilterContext)
     const utilityViewerRef = useRef<UtilityViewerRef>(null)
 
     // Zoom and pan state
@@ -103,48 +103,48 @@ const MapViewerInner = (props: MapViewerProps) => {
                                 <span className="team-label">CT</span>
                             </button>
                         </div>
-
                         {/* Utility Type Selection */}
-                        <button
-                            onClick={() => setSelectedNade('Smoke')}
-                            className="utility-dropdown-item"
-                            title="Smoke Grenade"
-                        >
-                            <Image className={'utility-dropdown-icon'} unoptimized alt={'Smoke'} height={0} width={0} src={`/icons/smoke.svg`} />
-                            <span className="utility-label">Smoke</span>
-                        </button>
-                        <button
-                            onClick={() => setSelectedNade('Molotov')}
-                            className="utility-dropdown-item"
-                            title="Molotov Cocktail"
-                        >
-                            <Image className={'utility-dropdown-icon'} unoptimized alt={'Molotov'} height={0} width={0} src={`/icons/molotov.svg`} />
-                            <span className="utility-label">Molotov</span>
-                        </button>
-                        <button
-                            onClick={() => setSelectedNade('Flash')}
-                            className="utility-dropdown-item"
-                            title="Flashbang"
-                        >
-                            <Image className={'utility-dropdown-icon'} unoptimized alt={'Flash'} height={0} width={0} src={`/icons/flash.svg`} />
-                            <span className="utility-label">Flash</span>
-                        </button>
-                        <button
-                            onClick={() => setSelectedNade('HE')}
-                            className="utility-dropdown-item"
-                            title="HE Grenade"
-                        >
-                            <Image className={'utility-dropdown-icon'} unoptimized alt={'HE'} height={0} width={0} src={`/icons/HE.svg`} />
-                            <span className="utility-label">HE</span>
-                        </button>
+                        <div className="utility-selection">
+                            <button
+                                onClick={() => setSelectedNade('Smoke')}
+                                className="utility-button"
+                                title="Smoke Grenade"
+                            >
+                                <Image src="/icons/smoke.svg" alt="Smoke" width={24} height={24} />
+                                <span>Smoke</span>
+                            </button>
+                            <button
+                                onClick={() => setSelectedNade('Flash')}
+                                className="utility-button"
+                                title="Flash Grenade"
+                            >
+                                <Image src="/icons/flash.svg" alt="Flash" width={24} height={24} />
+                                <span>Flash</span>
+                            </button>
+                            <button
+                                onClick={() => setSelectedNade('Molotov')}
+                                className="utility-button"
+                                title="Molotov/Incendiary"
+                            >
+                                <Image src="/icons/molotov.svg" alt="Molotov" width={24} height={24} />
+                                <span>Molotov</span>
+                            </button>
+                            <button
+                                onClick={() => setSelectedNade('HE')}
+                                className="utility-button"
+                                title="HE Grenade"
+                            >
+                                <Image src="/icons/HE.svg" alt="HE" width={24} height={24} />
+                                <span>HE</span>
+                            </button>
+                        </div>
                     </div>
                 }
             </div>
         )
     }
 
-    const handleAddNewUtil = async (e: any) => {
-        const bounds = e.currentTarget.getBoundingClientRect()
+    const handleAddNewUtil = async (e: React.MouseEvent) => {
         const img = document.getElementById('map-image') as HTMLImageElement
 
         if (!img || !selectedNade) return
@@ -199,7 +199,7 @@ const MapViewerInner = (props: MapViewerProps) => {
         setSelectedNade(undefined)
     }
 
-    const handleAddThrowingPoint = async (e: any) => {
+    const handleAddThrowingPoint = async (e: React.MouseEvent) => {
         if (!selectedLP || !isAddingThrowingPoint) return
 
         const img = document.getElementById('map-image') as HTMLImageElement
@@ -238,22 +238,16 @@ const MapViewerInner = (props: MapViewerProps) => {
                 if (result.success) {
                     // Add to local state
                     setUtility((previous) => {
-                        const updatedUtilities = previous.map(item =>
-                            item.id === selectedLP.id
-                                ? { ...item, throwingPoints: [...item.throwingPoints, result.data] }
-                                : item
-                        )
-
-                        // Update the selectedLP reference to the new object
-                        const updatedSelectedLP = updatedUtilities.find(item => item.id === selectedLP.id)
-
-                        if (updatedSelectedLP) {
-                            setSelectedLP(updatedSelectedLP)
-                        }
-
-                        return updatedUtilities
-                    })
-
+                        return previous.map(item => {
+                            if (item === selectedLP) {
+                                return {
+                                    ...item,
+                                    throwingPoints: [...item.throwingPoints, result.data]
+                                };
+                            }
+                            return item;
+                        });
+                    });
                     console.log('Throwing point saved at', xPercent.toFixed(2) + '%, ' + yPercent.toFixed(2) + '%');
                 } else {
                     console.error('Failed to save throwing point:', result.error);
@@ -267,129 +261,391 @@ const MapViewerInner = (props: MapViewerProps) => {
             console.error('Error saving throwing point:', error);
             alert('Error saving throwing point. Please try again.');
         }
+
+        setIsAddingThrowingPoint(false)
     }
 
-    // Handle zoom slider change
     const handleZoomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newZoom = parseFloat(e.target.value)
-        setZoom(newZoom)
+        const newZoom = parseFloat(e.target.value);
+        setZoom(newZoom);
+    };
 
-        // Reset pan when zooming out to 1x
-        if (newZoom <= 1) {
-            setPan({ x: 0, y: 0 })
-        }
-    }
-
-    // Handle wheel zoom with shift key
     const handleWheel = (e: React.WheelEvent) => {
+        // Only zoom if Shift key is held down
         if (e.shiftKey) {
-            e.preventDefault()
-            const delta = e.deltaY > 0 ? -0.1 : 0.1
-            const newZoom = Math.max(0.5, Math.min(5, zoom + delta))
-            setZoom(newZoom)
-
-            // Reset pan when zooming out to 1x
-            if (newZoom <= 1) {
-                setPan({ x: 0, y: 0 })
-            }
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            const newZoom = Math.max(0.5, Math.min(5, zoom + delta));
+            setZoom(newZoom);
         }
-    }
+    };
 
-    // Handle mouse drag for panning
     const handleMouseDown = (e: React.MouseEvent) => {
-        if (zoom > 1) {
-            setIsDragging(true)
-            setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y })
+        if (e.button === 0 && zoom > 1) { // Left mouse button and zoomed in
+            setIsDragging(true);
+            setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
         }
-    }
+    };
 
     const handleMouseMove = (e: React.MouseEvent) => {
-        if (isDragging && zoom > 1) {
+        if (isDragging) {
             setPan({
                 x: e.clientX - dragStart.x,
                 y: e.clientY - dragStart.y
-            })
+            });
         }
-    }
+    };
 
     const handleMouseUp = () => {
-        setIsDragging(false)
-    }
-
-    // Reset zoom and pan when map changes
-    useEffect(() => {
-        setZoom(1)
-        setPan({ x: 0, y: 0 })
-    }, [mapName])
-
+        setIsDragging(false);
+    };
 
     const handleLPClick = (data: TUtilityLandingPoint, e: React.MouseEvent) => {
-        e.stopPropagation() // Prevent the map click handler from firing
-        if (selectedLP === data) {
-            // If clicking the same landing point, deselect it
-            setSelectedLP(undefined)
-            setIsAddingThrowingPoint(false)
-        } else {
-            // Select new landing point
-            setSelectedLP(data)
-            setIsAddingThrowingPoint(false)
-        }
-    }
+        e.stopPropagation();
+        setSelectedLP(data);
+        setSelectedTP(undefined);
+        setIsModalOpen(false);
+    };
 
     const handleAddThrowingPointClick = (e: React.MouseEvent) => {
-        e.stopPropagation() // Prevent the map click handler from firing
-        setIsAddingThrowingPoint(true)
-    }
+        e.stopPropagation();
+        setIsAddingThrowingPoint(true);
+    };
 
     const handleDeleteLandingPoint = async (e: React.MouseEvent) => {
-        e.stopPropagation() // Prevent the map click handler from firing
-        if (selectedLP) {
-            try {
-                // Delete from database
-                const response = await fetch(`/api/utilities?utilityId=${selectedLP.id}`, {
-                    method: 'DELETE',
+        e.stopPropagation();
+        if (!selectedLP) return;
+
+        try {
+            const response = await fetch(`/api/utilities/${selectedLP.id}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    setUtility((previous) => previous.filter(item => item !== selectedLP))
+                    setSelectedLP(undefined);
+                    setSelectedTP(undefined);
+                    setIsModalOpen(false);
+                } else {
+                    console.error('Failed to delete landing point:', result.error);
+                    alert('Failed to delete landing point. Please try again.');
+                }
+            } else {
+                console.error('Failed to delete landing point');
+                alert('Failed to delete landing point. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error deleting landing point:', error);
+            alert('Error deleting landing point. Please try again.');
+        }
+    };
+
+    const handleDeleteThrowingPoint = (tp: TUtilityThrowingPoint, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!selectedLP) return;
+
+        try {
+            fetch(`/api/utilities/throwing-points/${tp.id}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            }).then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Failed to delete throwing point');
+            }).then(result => {
+                if (result.success) {
+                    setUtility((previous) => previous.map(item =>
+                        item === selectedLP
+                            ? { ...item, throwingPoints: item.throwingPoints.filter(t => t !== tp) }
+                            : item
+                    ));
+                    if (selectedTP === tp) {
+                        setSelectedTP(undefined);
+                        setIsModalOpen(false);
+                    }
+                } else {
+                    console.error('Failed to delete throwing point:', result.error);
+                    alert('Failed to delete throwing point. Please try again.');
+                }
+            }).catch(error => {
+                console.error('Error deleting throwing point:', error);
+                alert('Error deleting throwing point. Please try again.');
+            });
+        } catch (error) {
+            console.error('Error deleting throwing point:', error);
+            alert('Error deleting throwing point. Please try again.');
+        }
+    };
+
+    const handleTPClick = (data: TUtilityThrowingPoint, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSelectedTP(data);
+        setIsModalOpen(true);
+    };
+
+    const handleTPHover = (data: TUtilityThrowingPoint, e: React.MouseEvent) => {
+        setHoveredTP(data);
+        setHoverPosition({ x: e.clientX, y: e.clientY });
+
+        // Clear existing timeout
+        if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+        }
+
+        // Set new timeout
+        const timeout = setTimeout(() => {
+            // Fetch media for this throwing point
+            fetch(`/api/media/get?throwingPointId=${data.id}`, {
+                credentials: 'include'
+            }).then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Failed to fetch media');
+            }).then(result => {
+                if (result.success) {
+                    setHoveredTPMedia(result.data);
+                }
+            }).catch(error => {
+                console.error('Error fetching media:', error);
+                setHoveredTPMedia([]);
+            });
+        }, 500);
+
+        setHoverTimeout(timeout);
+    };
+
+    const handleTPLeave = () => {
+        setHoveredTP(null);
+        setHoveredTPMedia([]);
+        if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+            setHoverTimeout(null);
+        }
+    };
+
+    const handleModalClose = () => {
+        setIsModalOpen(false);
+        setSelectedTP(undefined);
+        setIsEditingDescription(false);
+        setIsEditingTitle(false);
+        setEditedDescription('');
+        setEditedTitle('');
+        setPendingMediaChanges({});
+    };
+
+    const handleDescriptionUpdate = (newDescription: string) => {
+        if (selectedTP) {
+            setSelectedTP({
+                ...selectedTP,
+                description: newDescription
+            });
+        }
+    };
+
+    const handleEditClick = () => {
+        if (selectedTP) {
+            setIsEditingDescription(true);
+            setIsEditingTitle(true);
+            setEditedDescription(selectedTP.description || '');
+            setEditedTitle(selectedTP.title || '');
+        }
+    };
+
+    const handleCancelEdit = () => {
+        setIsEditingDescription(false);
+        setIsEditingTitle(false);
+        setEditedDescription('');
+        setEditedTitle('');
+        setPendingMediaChanges({});
+    };
+
+    const handleSaveDescription = async () => {
+        if (!selectedTP) return;
+
+        setIsSavingDescription(true);
+        try {
+            const response = await fetch(`/api/utilities/throwing-points/${selectedTP.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    description: editedDescription
+                }),
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    setSelectedTP({
+                        ...selectedTP,
+                        description: editedDescription
+                    });
+                    setIsEditingDescription(false);
+                } else {
+                    console.error('Failed to save description:', result.error);
+                    alert('Failed to save description. Please try again.');
+                }
+            } else {
+                console.error('Failed to save description');
+                alert('Failed to save description. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error saving description:', error);
+            alert('Error saving description. Please try again.');
+        } finally {
+            setIsSavingDescription(false);
+        }
+    };
+
+    const handleSaveTitle = async () => {
+        if (!selectedTP) return;
+
+        setIsSavingTitle(true);
+        try {
+            const response = await fetch(`/api/utilities/throwing-points/${selectedTP.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: editedTitle
+                }),
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    setSelectedTP({
+                        ...selectedTP,
+                        title: editedTitle
+                    });
+                    setIsEditingTitle(false);
+                } else {
+                    console.error('Failed to save title:', result.error);
+                    alert('Failed to save title. Please try again.');
+                }
+            } else {
+                console.error('Failed to save title');
+                alert('Failed to save title. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error saving title:', error);
+            alert('Error saving title. Please try again.');
+        } finally {
+            setIsSavingTitle(false);
+        }
+    };
+
+    const handleMediaDescriptionChange = (mediaId: string, description: string) => {
+        setPendingMediaChanges(prev => ({
+            ...prev,
+            [mediaId]: description
+        }));
+    };
+
+    const handleSaveAll = async () => {
+        if (!selectedTP) return;
+
+        setIsSavingDescription(true);
+        setIsSavingTitle(true);
+
+        try {
+            // Save title
+            const titleResponse = await fetch(`/api/utilities/throwing-points/${selectedTP.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: editedTitle
+                }),
+                credentials: 'include'
+            });
+
+            if (!titleResponse.ok) {
+                throw new Error('Failed to save title');
+            }
+
+            const titleResult = await titleResponse.json();
+            if (!titleResult.success) {
+                throw new Error(titleResult.error || 'Failed to save title');
+            }
+
+            // Save description
+            const descResponse = await fetch(`/api/utilities/throwing-points/${selectedTP.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    description: editedDescription
+                }),
+                credentials: 'include'
+            });
+
+            if (!descResponse.ok) {
+                throw new Error('Failed to save description');
+            }
+
+            const descResult = await descResponse.json();
+            if (!descResult.success) {
+                throw new Error(descResult.error || 'Failed to save description');
+            }
+
+            // Save media descriptions
+            const mediaPromises = Object.entries(pendingMediaChanges).map(([mediaId, description]) =>
+                fetch(`/api/media/update-description`, {
+                    method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                    body: JSON.stringify({
+                        mediaId,
+                        description
+                    }),
                     credentials: 'include'
-                });
+                }).then(response => response.json())
+            );
 
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        // Remove from local state
-                        setUtility((previous) => previous.filter(item => item !== selectedLP))
-                        setSelectedLP(undefined)
-                        setIsAddingThrowingPoint(false)
-                        console.log('Landing point deleted successfully');
-                    } else {
-                        console.error('Failed to delete landing point:', result.error);
-                        alert('Failed to delete landing point. Please try again.');
-                    }
-                } else {
-                    console.error('Failed to delete landing point');
-                    alert('Failed to delete landing point. Please try again.');
-                }
-            } catch (error) {
-                console.error('Error deleting landing point:', error);
-                alert('Error deleting landing point. Please try again.');
+            await Promise.all(mediaPromises);
+
+            // Refresh media data in the carousel to reflect the updated descriptions
+            if (utilityViewerRef.current) {
+                utilityViewerRef.current.fetchMedia();
             }
-        }
-    }
 
-    const handleDeleteThrowingPoint = (tp: TUtilityThrowingPoint, e: React.MouseEvent) => {
-        e.stopPropagation() // Prevent the map click handler from firing
-        if (selectedLP) {
-            setUtility((previous) =>
-                previous.map(item =>
-                    item === selectedLP
-                        ? { ...item, throwingPoints: item.throwingPoints.filter(t => t !== tp) }
-                        : item
-                )
-            )
-            // Close the modal after deleting the throwing point
-            setIsModalOpen(false)
-            setSelectedTP(undefined)
+            // Update local state
+            setSelectedTP({
+                ...selectedTP,
+                title: editedTitle,
+                description: editedDescription
+            });
+            setIsEditingDescription(false);
+            setIsEditingTitle(false);
+            setPendingMediaChanges({});
+
+        } catch (error) {
+            console.error('Error saving all changes:', error);
+            alert('Error saving changes. Please try again.');
+        } finally {
+            setIsSavingDescription(false);
+            setIsSavingTitle(false);
+        }
+    };
+
+    const handleMapClick = (e: React.MouseEvent) => {
+        if (selectedNade) {
+            handleAddNewUtil(e)
+        } else if (isAddingThrowingPoint) {
+            handleAddThrowingPoint(e)
         }
     }
 
@@ -406,315 +662,6 @@ const MapViewerInner = (props: MapViewerProps) => {
             }
         }
     }, [selectedNade, zoom, isAddingThrowingPoint])
-
-    const handleTPClick = (data: TUtilityThrowingPoint, e: React.MouseEvent) => {
-        e.stopPropagation() // Prevent the map click handler from firing
-        setSelectedTP(data)
-        setIsModalOpen(true)
-        setIsEditingDescription(false)
-        setEditedDescription(data.description || '')
-    }
-
-    const handleTPHover = (data: TUtilityThrowingPoint, e: React.MouseEvent) => {
-        // Clear any existing timeout
-        if (hoverTimeout) {
-            clearTimeout(hoverTimeout);
-        }
-
-        // Set a timeout to show the modal after a short delay
-        const timeout = setTimeout(async () => {
-            // Calculate position to prevent going off-screen
-            const modalWidth = 300; // Approximate width of mini modal
-            const modalHeight = 200; // Increased height to accommodate image
-            const padding = 20;
-
-            let x = e.clientX + 10;
-            let y = e.clientY - 10;
-
-            // Check if modal would go off the right edge
-            if (x + modalWidth > window.innerWidth - padding) {
-                x = e.clientX - modalWidth - 10;
-            }
-
-            // Check if modal would go off the bottom edge
-            if (y + modalHeight > window.innerHeight - padding) {
-                y = e.clientY - modalHeight - 10;
-            }
-
-            // Ensure modal doesn't go off the left or top edges
-            x = Math.max(padding, x);
-            y = Math.max(padding, y);
-
-            setHoverPosition({ x, y });
-            setHoveredTP(data);
-
-            // Fetch media for the hovered throwing point
-            if (data.id) {
-                try {
-                    const params = new URLSearchParams();
-                    params.append('throwingPointId', data.id);
-
-                    const response = await fetch(`/api/media/get?${params}`, {
-                        credentials: 'include'
-                    });
-                    if (response.ok) {
-                        const result = await response.json();
-                        setHoveredTPMedia(result.media || []);
-                    }
-                } catch (error) {
-                    console.error('Error fetching media for hover:', error);
-                    setHoveredTPMedia([]);
-                }
-            }
-        }, 300); // 300ms delay
-
-        setHoverTimeout(timeout);
-    }
-
-    const handleTPLeave = () => {
-        // Clear the timeout if it exists
-        if (hoverTimeout) {
-            clearTimeout(hoverTimeout);
-            setHoverTimeout(null);
-        }
-        setHoveredTP(null);
-        setHoveredTPMedia([]);
-    }
-
-    const handleModalClose = () => {
-        setIsModalOpen(false)
-        setSelectedTP(undefined)
-        setIsEditingDescription(false)
-        setEditedDescription('')
-        setIsSavingDescription(false)
-        setIsEditingTitle(false)
-        setEditedTitle('')
-        setIsSavingTitle(false)
-    }
-
-    const handleDescriptionUpdate = (newDescription: string) => {
-        if (selectedTP) {
-            // Update the selectedTP with the new description
-            setSelectedTP({ ...selectedTP, description: newDescription });
-
-            // Update the utility state to reflect the change
-            setUtility((previous) =>
-                previous.map(item =>
-                    item.throwingPoints.some(tp => tp.id === selectedTP.id)
-                        ? {
-                            ...item,
-                            throwingPoints: item.throwingPoints.map(tp =>
-                                tp.id === selectedTP.id
-                                    ? { ...tp, description: newDescription }
-                                    : tp
-                            )
-                        }
-                        : item
-                )
-            );
-        }
-    }
-
-    const handleEditClick = () => {
-        setIsEditingDescription(true);
-        setIsEditingTitle(true);
-        setEditedDescription(selectedTP?.description || '');
-        setEditedTitle(selectedTP?.title || '');
-    };
-
-    const handleCancelEdit = () => {
-        setIsEditingDescription(false);
-        setIsEditingTitle(false);
-        setEditedDescription(selectedTP?.description || '');
-        setEditedTitle(selectedTP?.title || '');
-        setPendingMediaChanges({});
-    };
-
-    const handleSaveDescription = async () => {
-        if (!selectedTP) {
-            console.error('No throwing point selected for update');
-            return;
-        }
-
-        setIsSavingDescription(true);
-        try {
-            const response = await fetch('/api/utilities/throwing-points', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    id: selectedTP.id,
-                    description: editedDescription
-                }),
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                if (result.success) {
-                    setIsEditingDescription(false);
-                    handleDescriptionUpdate(editedDescription);
-                    console.log('Description updated successfully');
-                } else {
-                    console.error('Failed to update description:', result.error);
-                    alert('Failed to update description. Please try again.');
-                }
-            } else {
-                console.error('Failed to update description');
-                alert('Failed to update description. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error updating description:', error);
-            alert('Error updating description. Please try again.');
-        } finally {
-            setIsSavingDescription(false);
-        }
-    };
-
-    const handleEditTitleClick = () => {
-        setIsEditingTitle(true);
-        setEditedTitle(selectedTP?.title || '');
-    };
-
-    const handleCancelEditTitle = () => {
-        setIsEditingTitle(false);
-        setEditedTitle(selectedTP?.title || '');
-    };
-
-    const handleSaveTitle = async () => {
-        if (!selectedTP) {
-            console.error('No throwing point selected for update');
-            return;
-        }
-
-        setIsSavingTitle(true);
-        try {
-            const response = await fetch('/api/utilities/throwing-points', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    id: selectedTP.id,
-                    title: editedTitle
-                }),
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                if (result.success) {
-                    setIsEditingTitle(false);
-                    // Update the selectedTP with new title
-                    setSelectedTP(prev => prev ? { ...prev, title: editedTitle } : undefined);
-                    // Update the utility state to reflect the change
-                    setUtility(prev => prev.map(item =>
-                        item.throwingPoints.some(tp => tp.id === selectedTP.id)
-                            ? {
-                                ...item,
-                                throwingPoints: item.throwingPoints.map(tp =>
-                                    tp.id === selectedTP.id
-                                        ? { ...tp, title: editedTitle }
-                                        : tp
-                                )
-                            }
-                            : item
-                    ));
-                    console.log('Title updated successfully');
-                } else {
-                    console.error('Failed to update title:', result.error);
-                    alert('Failed to update title. Please try again.');
-                }
-            } else {
-                console.error('Failed to update title');
-                alert('Failed to update title. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error updating title:', error);
-            alert('Error updating title. Please try again.');
-        } finally {
-            setIsSavingTitle(false);
-        }
-    };
-
-    const handleMediaDescriptionChange = (mediaId: string, description: string) => {
-        // Store the change locally until save is clicked
-        setPendingMediaChanges(prev => ({
-            ...prev,
-            [mediaId]: description
-        }));
-    };
-
-    const handleSaveAll = async () => {
-        setIsSavingDescription(true);
-        setIsSavingTitle(true);
-
-        try {
-            // Save title changes
-            if (isEditingTitle) {
-                await handleSaveTitle();
-            }
-
-            // Save description changes
-            if (isEditingDescription) {
-                await handleSaveDescription();
-            }
-
-            // Save media description changes
-            const mediaUpdatePromises = Object.entries(pendingMediaChanges).map(async ([mediaId, description]) => {
-                try {
-                    const response = await fetch(`/api/media/update-description`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            mediaId,
-                            description,
-                        }),
-                        credentials: 'include'
-                    });
-
-                    if (!response.ok) {
-                        console.error(`Failed to update media description for ${mediaId}`);
-                        throw new Error(`Failed to update media description for ${mediaId}`);
-                    }
-                } catch (error) {
-                    console.error(`Error updating media description for ${mediaId}:`, error);
-                    throw error;
-                }
-            });
-
-            await Promise.all(mediaUpdatePromises);
-
-            // Refresh media carousel to show updated descriptions
-            if (utilityViewerRef.current) {
-                utilityViewerRef.current.fetchMedia();
-            }
-
-            // Clear pending changes and exit edit mode
-            setPendingMediaChanges({});
-            setIsEditingDescription(false);
-            setIsEditingTitle(false);
-
-            console.log('All changes saved successfully');
-        } catch (error) {
-            console.error('Error saving changes:', error);
-            alert('Error saving changes. Please try again.');
-        } finally {
-            setIsSavingDescription(false);
-            setIsSavingTitle(false);
-        }
-    };
-
-    const handleMapClick = (e: any) => {
-        if (selectedNade) {
-            handleAddNewUtil(e)
-        } else if (isAddingThrowingPoint) {
-            handleAddThrowingPoint(e)
-        }
-    }
 
     return (
         <>
@@ -809,63 +756,69 @@ const MapViewerInner = (props: MapViewerProps) => {
                         description={selectedTP.description}
                         throwingPointId={selectedTP.id}
                         onDescriptionUpdate={handleDescriptionUpdate}
-                        isEditingDescription={isEditingDescription}
-                        editedDescription={editedDescription}
-                        onDescriptionChange={setEditedDescription}
-                        onEditClick={handleEditClick}
-                        onSaveDescription={handleSaveDescription}
-                        onCancelEdit={handleCancelEdit}
-                        isSavingDescription={isSavingDescription}
                         onMediaDescriptionChange={handleMediaDescriptionChange}
                         pendingMediaChanges={pendingMediaChanges}
+                        isEditingDescription={isEditingDescription}
                     />
-                </div>}
+                </div>
+            }
 
-            {/* Mini Preview Modal on Hover */}
-            {hoveredTP && (
+            {/* Hover Preview */}
+            {hoveredTP && hoveredTPMedia.length > 0 && (
                 <div
-                    className="mini-preview-modal"
+                    className="hover-preview"
                     style={{
                         position: 'fixed',
                         left: hoverPosition.x + 10,
                         top: hoverPosition.y - 10,
-                        zIndex: 1000
+                        zIndex: 1000,
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        borderRadius: '8px',
+                        padding: '8px',
+                        maxWidth: '200px',
+                        pointerEvents: 'none'
                     }}
                 >
-                    <div className="mini-preview-content">
-                        <div className="mini-preview-header">
-                            <h4>{hoveredTP.title}</h4>
-                        </div>
-                        <div className="mini-preview-body">
-                            {hoveredTPMedia.length > 0 && (
-                                <div className="mini-preview-image">
-                                    {hoveredTPMedia[0].type === 'image' || hoveredTPMedia[0].type === 'gif' ? (
-                                        <Image
-                                            src={hoveredTPMedia[0].url}
-                                            alt={hoveredTPMedia[0].title || 'Media'}
-                                            className="mini-preview-img"
-                                            unoptimized
-                                            fill
-                                            sizes="300px"
-                                        />
-                                    ) : (
-                                        <video
-                                            src={hoveredTPMedia[0].url}
-                                            className="mini-preview-video"
-                                            muted
-                                            autoPlay
-                                            loop
-                                        />
-                                    )}
-                                </div>
-                            )}
-                            <div className="mini-description">
-                                {hoveredTP.description}
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                        {hoveredTPMedia.slice(0, 4).map((media: unknown, index: number) => (
+                            <div
+                                key={index}
+                                style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    backgroundColor: '#333',
+                                    borderRadius: '4px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '12px',
+                                    color: '#fff'
+                                }}
+                            >
+                                {typeof media === 'object' && media && 'type' in media && media.type === 'image' ? 'IMG' : 'VID'}
                             </div>
-                        </div>
+                        ))}
+                        {hoveredTPMedia.length > 4 && (
+                            <div
+                                style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    backgroundColor: '#333',
+                                    borderRadius: '4px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '12px',
+                                    color: '#fff'
+                                }}
+                            >
+                                +{hoveredTPMedia.length - 4}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
+
             <div style={{ display: 'flex', flexDirection: 'row', height: '100%' }}>
                 <Sidebar />
                 <div
@@ -902,12 +855,12 @@ const MapViewerInner = (props: MapViewerProps) => {
                                 const teamKey = item.team;
 
                                 // Check if utility type is filtered out
-                                if ((utilityFilter as any)[utilityTypeKey] === false) {
+                                if (utilityFilter[utilityTypeKey as keyof typeof utilityFilter] === false) {
                                     return false;
                                 }
 
                                 // Check if team is filtered out
-                                if ((utilityFilter as any)[teamKey] === false) {
+                                if (utilityFilter[teamKey as keyof typeof utilityFilter] === false) {
                                     return false;
                                 }
 
@@ -962,7 +915,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                                                 </button>
                                             </>
                                         )}
-                                        {isSelected && item.throwingPoints.map((tp, index) => (
+                                        {isSelected && item.throwingPoints.map((tp) => (
                                             <button
                                                 key={tp.id || `${tp.position.X}-${tp.position.Y}`}
                                                 className={'utility-tp-button'}

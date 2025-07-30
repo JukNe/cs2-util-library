@@ -26,7 +26,7 @@ const getFileExtension = (fileName: string): string | undefined => {
 
 const getFileType = (extension: string): 'image' | 'video' | 'gif' => {
     if (extension === 'gif') return 'gif';
-    if (VALID_EXTENSIONS.video.includes(extension as any)) return 'video';
+    if (VALID_EXTENSIONS.video.includes(extension as typeof VALID_EXTENSIONS.video[number])) return 'video';
     return 'image';
 };
 
@@ -46,7 +46,7 @@ const validateFile = (file: File, maxFileSize: number): string | null => {
     }
 
     const validExtensions = [...VALID_EXTENSIONS.image, ...VALID_EXTENSIONS.video];
-    if (!validExtensions.includes(extension as any)) {
+    if (!validExtensions.includes(extension as typeof validExtensions[number])) {
         return `Invalid file type. Allowed: ${validExtensions.join(', ')}`;
     }
 
@@ -77,7 +77,7 @@ const MediaUploader = ({
     const fileIcon = useMemo(() => {
         if (!selectedFile) return null;
         const extension = getFileExtension(selectedFile.name);
-        const isVideo = VALID_EXTENSIONS.video.includes(extension as any);
+        const isVideo = extension ? VALID_EXTENSIONS.video.includes(extension as typeof VALID_EXTENSIONS.video[number]) : false;
         return isVideo ? <BsFileEarmarkPlay size="2em" /> : <BsFileEarmarkImage size="2em" />;
     }, [selectedFile]);
 
