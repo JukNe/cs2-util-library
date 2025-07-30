@@ -4,9 +4,22 @@
     align-items: center;
     position: relative;
     width: 100%;
-    height: 100vh;
+    height: calc(100vh - 2.5em - 3.5em); // Account for header (2.5em) and navbar (3.5em)
     overflow: hidden;
     user-select: none;
+
+    &.nuke-map {
+        justify-content: flex-start;
+    }
+
+    // Mobile responsive adjustments
+    @media (max-width: 768px) {
+        height: calc(100vh - 2.5em - 3em); // Account for header and navbar
+    }
+
+    @media (max-width: 480px) {
+        height: calc(100vh - 2em - 2.5em); // Account for header and navbar
+    }
 }
 
 #map-image {
@@ -151,11 +164,13 @@
 .add-nade-dropdown {
     display: flex;
     flex-direction: column;
-    position: absolute;
-    left: 1em;
-    top: 5%;
-    z-index: 100;
+    position: relative;
+    z-index: 1000;
     gap: 0.5em;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 1em;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 
     .main-add-button {
         height: 3.5em;
@@ -172,15 +187,7 @@
         box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
         font-weight: bold;
 
-        &:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
-            background: linear-gradient(135deg, #45a049 0%, #388E3C 100%);
-        }
 
-        &:active {
-            transform: scale(0.95);
-        }
     }
 
     .utility-dropdown-menu {
@@ -195,7 +202,16 @@
         backdrop-filter: blur(10px);
         z-index: 1000;
         min-width: 200px;
-        animation: slideDown 0.2s ease-out;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px) scale(0.95);
+        transition: all 0.2s ease-out;
+
+        &.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
 
         .team-selection {
             display: flex;
@@ -301,22 +317,10 @@
     }
 }
 
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px) scale(0.95);
-    }
 
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
 
 .zoom-controls {
-    position: absolute;
-    right: 12%;
-    top: 6%;
+    position: relative;
     z-index: 1000;
     display: flex;
     flex-direction: column;
@@ -327,6 +331,55 @@
     color: white;
     min-width: 120px;
     border: 1px solid rgba(255, 255, 255, 0.2);
+    gap: 0.5em;
+
+    .zoom-buttons {
+        display: flex;
+        gap: 0.25em;
+        align-items: center;
+
+        .zoom-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            border: 1px solid #2E7D32;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: bold;
+
+            &:hover:not(:disabled) {
+                transform: scale(1.05);
+                box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4);
+                background: linear-gradient(135deg, #45a049 0%, #388E3C 100%);
+            }
+
+            &:active:not(:disabled) {
+                transform: scale(0.95);
+            }
+
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+                background: linear-gradient(135deg, #666 0%, #555 100%);
+                border-color: #444;
+            }
+
+            &.reset-button {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-color: #4a5568;
+
+                &:hover:not(:disabled) {
+                    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+                    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+                }
+            }
+        }
+    }
 }
 
 .zoom-slider {
@@ -754,4 +807,9 @@
         opacity: 1;
         transform: scale(1);
     }
+}
+
+// Custom cursor styles for utility icons
+.custom-cursor {
+    cursor: none !important;
 }

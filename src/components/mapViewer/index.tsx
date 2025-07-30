@@ -6,7 +6,7 @@ import { Media } from '@/types/media';
 import Image from 'next/image'
 import { useContext, useEffect, useState, useRef } from 'react';
 import Sidebar from '../sidebar';
-import { BsPlus, BsX, BsTrash, BsPencil, BsCheck } from 'react-icons/bs';
+import { BsPlus, BsX, BsTrash, BsPencil, BsCheck, BsZoomIn, BsZoomOut, BsArrowClockwise } from 'react-icons/bs';
 import UtilityPreview from '../utilityViewer';
 import { UtilityFilterContext } from '@/utils/contexts';
 import { UtilityViewerRef } from '../utilityViewer';
@@ -45,6 +45,7 @@ const MapViewerInner = (props: MapViewerProps) => {
     const [isLoadingMedia, setIsLoadingMedia] = useState(false)
     const [isAddingLandingPoint, setIsAddingLandingPoint] = useState(false)
     const [isAddingThrowingPointLoading, setIsAddingThrowingPointLoading] = useState(false)
+    const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 })
     const { utilityFilter } = useContext(UtilityFilterContext)
     const utilityViewerRef = useRef<UtilityViewerRef>(null)
 
@@ -90,70 +91,77 @@ const MapViewerInner = (props: MapViewerProps) => {
 
     const NewNadeDropDown = () => {
         return (
-            <div className={'add-nade-dropdown'}>
+            <div className={'add-nade-dropdown'} onClick={(e) => e.stopPropagation()}>
                 <button
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    onClick={() => {
+                        // If currently adding a landing point, cancel it
+                        if (selectedNade) {
+                            setSelectedNade(undefined);
+                            setIsDropdownOpen(false);
+                        } else {
+                            // Otherwise toggle the dropdown
+                            setIsDropdownOpen(!isDropdownOpen);
+                        }
+                    }}
                     className="main-add-button"
-                    title="Add new utility"
+                    title={selectedNade ? "Cancel adding utility" : "Add new utility"}
                 >
                     <BsPlus size={'2em'} />
                 </button>
-                {isDropdownOpen &&
-                    <div className="utility-dropdown-menu">
-                        {/* Team Selection */}
-                        <div className="team-selection">
-                            <button
-                                onClick={() => setSelectedTeam('T')}
-                                className={`team-button ${selectedTeam === 'T' ? 'active' : ''}`}
-                                title="Terrorist Team"
-                            >
-                                <span className="team-label">T</span>
-                            </button>
-                            <button
-                                onClick={() => setSelectedTeam('CT')}
-                                className={`team-button ${selectedTeam === 'CT' ? 'active' : ''}`}
-                                title="Counter-Terrorist Team"
-                            >
-                                <span className="team-label">CT</span>
-                            </button>
-                        </div>
-                        {/* Utility Type Selection */}
-                        <div className="utility-selection">
-                            <button
-                                onClick={() => setSelectedNade('Smoke')}
-                                className="utility-button"
-                                title="Smoke Grenade"
-                            >
-                                <Image src="/icons/smoke.svg" alt="Smoke" width={24} height={24} />
-                                <span>Smoke</span>
-                            </button>
-                            <button
-                                onClick={() => setSelectedNade('Flash')}
-                                className="utility-button"
-                                title="Flash Grenade"
-                            >
-                                <Image src="/icons/flash.svg" alt="Flash" width={24} height={24} />
-                                <span>Flash</span>
-                            </button>
-                            <button
-                                onClick={() => setSelectedNade('Molotov')}
-                                className="utility-button"
-                                title="Molotov/Incendiary"
-                            >
-                                <Image src="/icons/molotov.svg" alt="Molotov" width={24} height={24} />
-                                <span>Molotov</span>
-                            </button>
-                            <button
-                                onClick={() => setSelectedNade('HE')}
-                                className="utility-button"
-                                title="HE Grenade"
-                            >
-                                <Image src="/icons/HE.svg" alt="HE" width={24} height={24} />
-                                <span>HE</span>
-                            </button>
-                        </div>
+                <div className={`utility-dropdown-menu ${isDropdownOpen ? 'show' : ''}`}>
+                    {/* Team Selection */}
+                    <div className="team-selection">
+                        <button
+                            onClick={() => setSelectedTeam('T')}
+                            className={`team-button ${selectedTeam === 'T' ? 'active' : ''}`}
+                            title="Terrorist Team"
+                        >
+                            <span className="team-label">T</span>
+                        </button>
+                        <button
+                            onClick={() => setSelectedTeam('CT')}
+                            className={`team-button ${selectedTeam === 'CT' ? 'active' : ''}`}
+                            title="Counter-Terrorist Team"
+                        >
+                            <span className="team-label">CT</span>
+                        </button>
                     </div>
-                }
+                    {/* Utility Type Selection */}
+                    <div className="utility-selection">
+                        <button
+                            onClick={() => setSelectedNade('Smoke')}
+                            className="utility-button"
+                            title="Smoke Grenade"
+                        >
+                            <Image src="/icons/smoke.svg" alt="Smoke" width={24} height={24} />
+                            <span>Smoke</span>
+                        </button>
+                        <button
+                            onClick={() => setSelectedNade('Flash')}
+                            className="utility-button"
+                            title="Flash Grenade"
+                        >
+                            <Image src="/icons/flash.svg" alt="Flash" width={24} height={24} />
+                            <span>Flash</span>
+                        </button>
+                        <button
+                            onClick={() => setSelectedNade('Molotov')}
+                            className="utility-button"
+                            title="Molotov/Incendiary"
+                        >
+                            <Image src="/icons/molotov.svg" alt="Molotov" width={24} height={24} />
+                            <span>Molotov</span>
+                        </button>
+                        <button
+                            onClick={() => setSelectedNade('HE')}
+                            className="utility-button"
+                            title="HE Grenade"
+                        >
+                            <Image src="/icons/HE.svg" alt="HE" width={24} height={24} />
+                            <span>HE</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         )
     }
@@ -191,7 +199,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                         Y: yPercent
                     }
                 }),
-                credentials: 'include' // <-- Ensure cookies/session are sent
+                credentials: 'include'
             });
 
             if (response.ok) {
@@ -290,6 +298,11 @@ const MapViewerInner = (props: MapViewerProps) => {
     const handleZoomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newZoom = parseFloat(e.target.value);
         setZoom(newZoom);
+
+        // Reset pan position when zoom returns to 100%
+        if (newZoom === 1) {
+            setPan({ x: 0, y: 0 });
+        }
     };
 
     const handleWheel = (e: React.WheelEvent) => {
@@ -299,7 +312,27 @@ const MapViewerInner = (props: MapViewerProps) => {
             const delta = e.deltaY > 0 ? -0.1 : 0.1;
             const newZoom = Math.max(0.5, Math.min(5, zoom + delta));
             setZoom(newZoom);
+
+            // Reset pan position when zoom returns to 100%
+            if (newZoom === 1) {
+                setPan({ x: 0, y: 0 });
+            }
         }
+    };
+
+    const handleZoomIn = () => {
+        const newZoom = Math.min(5, zoom + 0.1);
+        setZoom(newZoom);
+    };
+
+    const handleZoomOut = () => {
+        const newZoom = Math.max(0.5, zoom - 0.1);
+        setZoom(newZoom);
+    };
+
+    const handleResetZoom = () => {
+        setZoom(1);
+        setPan({ x: 0, y: 0 });
     };
 
     const handleMouseDown = (e: React.MouseEvent) => {
@@ -310,6 +343,10 @@ const MapViewerInner = (props: MapViewerProps) => {
     };
 
     const handleMouseMove = (e: React.MouseEvent) => {
+        // Update cursor position for custom cursor
+        setCursorPosition({ x: e.clientX, y: e.clientY });
+
+        // Handle dragging for zoom
         if (isDragging) {
             setPan({
                 x: e.clientX - dragStart.x,
@@ -327,6 +364,8 @@ const MapViewerInner = (props: MapViewerProps) => {
         // Toggle selection: if clicking the same landing point, deselect it
         if (selectedLP === data) {
             setSelectedLP(undefined);
+            // Reset throwing point mode when deselecting landing point
+            setIsAddingThrowingPoint(false);
         } else {
             setSelectedLP(data);
         }
@@ -514,8 +553,6 @@ const MapViewerInner = (props: MapViewerProps) => {
         setPendingMediaChanges({});
     };
 
-
-
     const handleEditClick = () => {
         if (selectedTP) {
             setIsEditingDescription(true);
@@ -532,10 +569,6 @@ const MapViewerInner = (props: MapViewerProps) => {
         setEditedTitle('');
         setPendingMediaChanges({});
     };
-
-
-
-
 
     const handleMediaDescriptionChange = (mediaId: string, description: string) => {
         setPendingMediaChanges(prev => ({
@@ -644,6 +677,11 @@ const MapViewerInner = (props: MapViewerProps) => {
     };
 
     const handleMapClick = (e: React.MouseEvent) => {
+        // Close dropdown if clicking outside of it
+        if (isDropdownOpen) {
+            setIsDropdownOpen(false)
+        }
+
         if (selectedNade) {
             handleAddNewUtil(e)
         } else if (isAddingThrowingPoint) {
@@ -651,22 +689,109 @@ const MapViewerInner = (props: MapViewerProps) => {
         }
     }
 
+    // Handle dropdown closing when utility is selected
     useEffect(() => {
-        setIsDropdownOpen(false)
+        if (selectedNade && isDropdownOpen) {
+            // Add a small delay to allow the user to see the selection
+            const timer = setTimeout(() => {
+                setIsDropdownOpen(false)
+            }, 300)
+
+            return () => clearTimeout(timer)
+        }
+    }, [selectedNade, isDropdownOpen])
+
+    // Handle cursor changes
+    useEffect(() => {
         const img = document.getElementById('map-image')
         if (img) {
-            if (selectedNade != undefined) {
-                img.style.cursor = 'crosshair'
+            if (selectedNade != undefined && !isDropdownOpen) {
+                // Add custom cursor class based on utility type only when dropdown is closed
+                img.classList.add('custom-cursor');
+                img.classList.add(`custom-cursor-${selectedNade.toLowerCase()}`);
+                img.style.cursor = 'none';
             } else if (isAddingThrowingPoint) {
-                img.style.cursor = 'crosshair'
+                img.style.cursor = 'none'
+                // Remove custom cursor classes
+                img.classList.remove('custom-cursor', 'custom-cursor-smoke', 'custom-cursor-flash', 'custom-cursor-molotov', 'custom-cursor-he');
             } else {
                 img.style.cursor = zoom > 1 ? 'grab' : 'auto'
+                // Remove custom cursor classes
+                img.classList.remove('custom-cursor', 'custom-cursor-smoke', 'custom-cursor-flash', 'custom-cursor-molotov', 'custom-cursor-he');
             }
         }
-    }, [selectedNade, zoom, isAddingThrowingPoint])
+    }, [selectedNade, zoom, isAddingThrowingPoint, isDropdownOpen])
+
+    // Handle Escape key to cancel operations
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                // Cancel landing point mode
+                if (selectedNade) {
+                    setSelectedNade(undefined);
+                    setIsDropdownOpen(false);
+                }
+                // Cancel throwing point mode
+                if (isAddingThrowingPoint) {
+                    setIsAddingThrowingPoint(false);
+                }
+                // Close dropdown if open
+                if (isDropdownOpen) {
+                    setIsDropdownOpen(false);
+                }
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [selectedNade, isAddingThrowingPoint, isDropdownOpen]);
 
     return (
         <>
+            {/* Custom cursor for utility icons */}
+            {selectedNade && !isDropdownOpen && (
+                <div
+                    className={`custom-cursor custom-cursor-${selectedNade.toLowerCase()}`}
+                    style={{
+                        position: 'fixed',
+                        left: cursorPosition.x,
+                        top: cursorPosition.y,
+                        width: '32px',
+                        height: '32px',
+                        backgroundImage: `url(${getUtilityIconSrc(selectedNade)})`,
+                        backgroundSize: 'contain',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'center',
+                        pointerEvents: 'none',
+                        zIndex: 9999,
+                        transform: 'translate(-50%, -50%)'
+                    }}
+                />
+            )}
+
+            {/* Custom cursor for throwing point mode */}
+            {isAddingThrowingPoint && !isAddingThrowingPointLoading && (
+                <div
+                    className="throwing-point-cursor"
+                    style={{
+                        position: 'fixed',
+                        left: cursorPosition.x,
+                        top: cursorPosition.y,
+                        width: '32px',
+                        height: '32px',
+                        backgroundColor: 'lime',
+                        borderRadius: '50%',
+                        pointerEvents: 'none',
+                        zIndex: 9999,
+                        transform: 'translate(-50%, -50%)',
+                        border: '2px solid white',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+                    }}
+                />
+            )}
+
             {selectedTP && isModalOpen &&
                 <div className={'modal-wrapper'}>
                     <div className='utility-modal-header'>
@@ -907,7 +1032,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                     onMouseLeave={handleMouseUp}
                     onWheel={handleWheel}
                     id='map-overview'
-                    className={'map-overview'}
+                    className={`map-overview ${mapName === 'nuke' ? 'nuke-map' : ''}`}
                     style={{ cursor: isDragging ? 'grabbing' : (zoom > 1 ? 'grab' : 'auto') }}
                 >
                     {loading && (
@@ -1023,21 +1148,54 @@ const MapViewerInner = (props: MapViewerProps) => {
                                     </div>)
                             })}
                     </div>
-                    <NewNadeDropDown />
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        top: '7em',
+                        position: 'fixed',
+                        width: typeof window !== 'undefined' && window.location.pathname === '/nuke' ? '78%' : '65%',
+                    }}  >
+                        <NewNadeDropDown />
 
-                    {/* Zoom Slider */}
-                    <div className="zoom-controls">
-                        <input
-                            type="range"
-                            min="0.5"
-                            max="5"
-                            step="0.1"
-                            value={zoom}
-                            onChange={handleZoomChange}
-                            className="zoom-slider"
-                            style={{ width: '100px', height: '8px' }}
-                        />
-                        <span className="zoom-value">{Math.round(zoom * 100)}%</span>
+                        {/* Zoom Controls */}
+                        <div className="zoom-controls">
+                            <div className="zoom-buttons">
+                                <button
+                                    onClick={handleZoomOut}
+                                    className="zoom-button"
+                                    title="Zoom Out"
+                                    disabled={zoom <= 0.5}
+                                >
+                                    <BsZoomOut size="16" />
+                                </button>
+                                <button
+                                    onClick={handleResetZoom}
+                                    className="zoom-button reset-button"
+                                    title="Reset to 100%"
+                                >
+                                    <BsArrowClockwise size="16" />
+                                </button>
+                                <button
+                                    onClick={handleZoomIn}
+                                    className="zoom-button"
+                                    title="Zoom In"
+                                    disabled={zoom >= 5}
+                                >
+                                    <BsZoomIn size="16" />
+                                </button>
+                            </div>
+                            <input
+                                type="range"
+                                min="0.5"
+                                max="5"
+                                step="0.1"
+                                value={zoom}
+                                onChange={handleZoomChange}
+                                className="zoom-slider"
+                                style={{ width: '100px', height: '8px' }}
+                            />
+                            <span className="zoom-value">{Math.round(zoom * 100)}%</span>
+                        </div>
                     </div>
                 </div>
             </div>
