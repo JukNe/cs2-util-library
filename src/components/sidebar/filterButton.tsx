@@ -43,7 +43,13 @@ const FilterButton = (props: FilterButtonProps) => {
             const iconName = iconMapping[type] || type;
             return `/icons/${iconName}.png`
         }
-        return `/icons/${type}.svg`
+
+        // Map filter types to actual icon file names for SVG
+        const iconMapping: Record<string, string> = {
+            'he': 'HE'
+        };
+        const iconName = iconMapping[type] || type;
+        return `/icons/${iconName}.svg`
     }
 
     return (

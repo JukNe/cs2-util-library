@@ -42,8 +42,18 @@ const MapViewerInner = (props: MapViewerProps) => {
     const [pendingMediaChanges, setPendingMediaChanges] = useState<Record<string, string>>({})
     const [hoveredTPMedia, setHoveredTPMedia] = useState<Media[]>([])
     const [mediaCache, setMediaCache] = useState<Record<string, Media[]>>({})
+    const [isLoadingMedia, setIsLoadingMedia] = useState(false)
     const { utilityFilter } = useContext(UtilityFilterContext)
     const utilityViewerRef = useRef<UtilityViewerRef>(null)
+
+    // Helper function to map utility types to icon file names
+    const getUtilityIconSrc = (utilityType: string) => {
+        const iconMapping: Record<string, string> = {
+            'he': 'HE'
+        };
+        const iconName = iconMapping[utilityType] || utilityType;
+        return `/icons/${iconName}.svg`;
+    };
 
     // Zoom and pan state
     const [zoom, setZoom] = useState(1)
@@ -414,6 +424,9 @@ const MapViewerInner = (props: MapViewerProps) => {
                 return;
             }
 
+            // Set loading state
+            setIsLoadingMedia(true);
+
             // Fetch media for this throwing point
             fetch(`/api/media/get?throwingPointId=${throwingPointId}`, {
                 credentials: 'include'
@@ -430,6 +443,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                     [throwingPointId]: media
                 }));
                 setHoveredTPMedia(media);
+                setIsLoadingMedia(false);
             }).catch(error => {
                 console.error('Error fetching media:', error);
                 // Cache empty array to avoid repeated failed requests
@@ -438,6 +452,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                     [throwingPointId]: []
                 }));
                 setHoveredTPMedia([]);
+                setIsLoadingMedia(false);
             });
         }, 500);
 
@@ -447,6 +462,7 @@ const MapViewerInner = (props: MapViewerProps) => {
     const handleTPLeave = () => {
         setHoveredTP(null);
         setHoveredTPMedia([]);
+        setIsLoadingMedia(false);
         if (hoverTimeout) {
             clearTimeout(hoverTimeout);
             setHoverTimeout(null);
@@ -832,8 +848,12 @@ const MapViewerInner = (props: MapViewerProps) => {
                         </div>
                     )}
 
-                    {/* No Media Message */}
-                    {hoveredTPMedia.length === 0 && (
+                    {/* Media Status Message */}
+                    {isLoadingMedia ? (
+                        <div style={{ color: '#999', fontSize: '12px', fontStyle: 'italic' }}>
+                            Loading...
+                        </div>
+                    ) : hoveredTPMedia.length === 0 && (
                         <div style={{ color: '#999', fontSize: '12px', fontStyle: 'italic' }}>
                             No media attached
                         </div>
@@ -898,7 +918,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                                             style={{
                                                 left: `${item.position.X}%`,
                                                 top: `${item.position.Y}%`,
-                                                backgroundImage: `url(/icons/${item.utilityType}.svg)`,
+                                                backgroundImage: `url(${getUtilityIconSrc(item.utilityType)})`,
                                                 transform: `translate(-50%, -50%) scale(${1 / zoom})`
                                             }}
                                             key={item.position.X.toString() + item.position.Y.toString()}
