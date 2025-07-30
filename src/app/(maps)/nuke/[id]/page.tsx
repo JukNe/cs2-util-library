@@ -16,7 +16,6 @@ const NukeDetail = ({ params }: PageProps) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const resolvedParams = await params;
                 const response = await fetch(`/api/maps/nuke`, {
                     cache: 'no-store'
                 });

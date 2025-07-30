@@ -16,7 +16,6 @@ const Dust2Detail = ({ params }: PageProps) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const resolvedParams = await params;
                 const response = await fetch(`/api/maps/dust2`, {
                     cache: 'no-store'
                 });

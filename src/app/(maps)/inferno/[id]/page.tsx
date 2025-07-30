@@ -16,7 +16,6 @@ const InfernoDetail = ({ params }: PageProps) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const resolvedParams = await params;
                 const response = await fetch(`/api/maps/inferno`, {
                     cache: 'no-store'
                 });

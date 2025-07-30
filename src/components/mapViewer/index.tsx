@@ -2,6 +2,7 @@
 
 import './style.scss'
 import { TUtilityThrowingPoint, TUtilityLandingPoint } from '@/types/utilities';
+import { Media } from '@/types/media';
 import Image from 'next/image'
 import { useContext, useEffect, useState, useRef } from 'react';
 import Sidebar from '../sidebar';
@@ -39,8 +40,8 @@ const MapViewerInner = (props: MapViewerProps) => {
     const [editedTitle, setEditedTitle] = useState('')
     const [isSavingTitle, setIsSavingTitle] = useState(false)
     const [pendingMediaChanges, setPendingMediaChanges] = useState<Record<string, string>>({})
-    const [hoveredTPMedia, setHoveredTPMedia] = useState<unknown[]>([])
-    const [mediaCache, setMediaCache] = useState<Record<string, unknown[]>>({})
+    const [hoveredTPMedia, setHoveredTPMedia] = useState<Media[]>([])
+    const [mediaCache, setMediaCache] = useState<Record<string, Media[]>>({})
     const { utilityFilter } = useContext(UtilityFilterContext)
     const utilityViewerRef = useRef<UtilityViewerRef>(null)
 
@@ -462,14 +463,7 @@ const MapViewerInner = (props: MapViewerProps) => {
         setPendingMediaChanges({});
     };
 
-    const handleDescriptionUpdate = (newDescription: string) => {
-        if (selectedTP) {
-            setSelectedTP({
-                ...selectedTP,
-                description: newDescription
-            });
-        }
-    };
+
 
     const handleEditClick = () => {
         if (selectedTP) {
@@ -488,85 +482,9 @@ const MapViewerInner = (props: MapViewerProps) => {
         setPendingMediaChanges({});
     };
 
-    const handleSaveDescription = async () => {
-        if (!selectedTP) return;
 
-        setIsSavingDescription(true);
-        try {
-            const response = await fetch(`/api/utilities/throwing-points/${selectedTP.id}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    description: editedDescription
-                }),
-                credentials: 'include'
-            });
 
-            if (response.ok) {
-                const result = await response.json();
-                if (result.success) {
-                    setSelectedTP({
-                        ...selectedTP,
-                        description: editedDescription
-                    });
-                    setIsEditingDescription(false);
-                } else {
-                    console.error('Failed to save description:', result.error);
-                    alert('Failed to save description. Please try again.');
-                }
-            } else {
-                console.error('Failed to save description');
-                alert('Failed to save description. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error saving description:', error);
-            alert('Error saving description. Please try again.');
-        } finally {
-            setIsSavingDescription(false);
-        }
-    };
 
-    const handleSaveTitle = async () => {
-        if (!selectedTP) return;
-
-        setIsSavingTitle(true);
-        try {
-            const response = await fetch(`/api/utilities/throwing-points/${selectedTP.id}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    title: editedTitle
-                }),
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                if (result.success) {
-                    setSelectedTP({
-                        ...selectedTP,
-                        title: editedTitle
-                    });
-                    setIsEditingTitle(false);
-                } else {
-                    console.error('Failed to save title:', result.error);
-                    alert('Failed to save title. Please try again.');
-                }
-            } else {
-                console.error('Failed to save title');
-                alert('Failed to save title. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error saving title:', error);
-            alert('Error saving title. Please try again.');
-        } finally {
-            setIsSavingTitle(false);
-        }
-    };
 
     const handleMediaDescriptionChange = (mediaId: string, description: string) => {
         setPendingMediaChanges(prev => ({
@@ -663,6 +581,15 @@ const MapViewerInner = (props: MapViewerProps) => {
             setIsSavingDescription(false);
             setIsSavingTitle(false);
         }
+    };
+
+    // Function to invalidate media cache for a specific throwing point
+    const invalidateMediaCache = (throwingPointId: string) => {
+        setMediaCache(prev => {
+            const newCache = { ...prev };
+            delete newCache[throwingPointId];
+            return newCache;
+        });
     };
 
     const handleMapClick = (e: React.MouseEvent) => {
@@ -774,6 +701,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                         onMediaDescriptionChange={handleMediaDescriptionChange}
                         pendingMediaChanges={pendingMediaChanges}
                         isEditingDescription={isEditingDescription}
+                        onMediaUploaded={() => selectedTP.id && invalidateMediaCache(selectedTP.id)}
                     />
                 </div>
             }
@@ -811,7 +739,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                         <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                             {/* Show first media file */}
                             {(() => {
-                                const firstMedia = hoveredTPMedia[0] as any;
+                                const firstMedia = hoveredTPMedia[0];
                                 if (firstMedia && firstMedia.url) {
                                     if (firstMedia.type === 'image') {
                                         return (

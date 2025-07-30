@@ -35,7 +35,13 @@ const FilterButton = (props: FilterButtonProps) => {
     // Determine the icon source based on iconType
     const getIconSrc = () => {
         if (iconType === 'png') {
-            return `/icons/${type}.png`
+            // Map filter types to actual icon file names
+            const iconMapping: Record<string, string> = {
+                'T': 'terrorist',
+                'CT': 'ct'
+            };
+            const iconName = iconMapping[type] || type;
+            return `/icons/${iconName}.png`
         }
         return `/icons/${type}.svg`
     }

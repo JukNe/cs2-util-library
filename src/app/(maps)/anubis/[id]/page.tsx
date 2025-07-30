@@ -16,7 +16,6 @@ const AnubisDetail = ({ params }: PageProps) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const resolvedParams = await params;
                 const response = await fetch(`/api/maps/anubis`, {
                     cache: 'no-store'
                 });

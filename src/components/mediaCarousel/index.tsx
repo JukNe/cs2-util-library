@@ -12,6 +12,7 @@ interface MediaCarouselProps {
     isEditing?: boolean;
     onMediaDescriptionChange?: (mediaId: string, description: string) => void;
     pendingMediaChanges?: Record<string, string>;
+    onMediaUploaded?: () => void;
 }
 
 export interface MediaCarouselRef {
@@ -25,7 +26,8 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
     showUploadSection = false,
     isEditing = false,
     onMediaDescriptionChange,
-    pendingMediaChanges
+    pendingMediaChanges,
+    onMediaUploaded
 }, ref) => {
     const [media, setMedia] = useState<Media[]>([]);
     const [loading, setLoading] = useState(true);
@@ -59,6 +61,10 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
     const handleMediaUploaded = () => {
         // Refresh the media carousel when new media is uploaded
         fetchMedia();
+        // Notify parent component to invalidate cache
+        if (onMediaUploaded) {
+            onMediaUploaded();
+        }
         console.log('Media uploaded successfully');
     };
 

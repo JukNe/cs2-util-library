@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMapData } from '@/lib/map-data';
 import { validateSession } from '@/lib/session';
-import prisma from '@/lib/prisma';
 
 export async function GET(
     request: NextRequest,

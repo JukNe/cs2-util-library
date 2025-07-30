@@ -16,7 +16,6 @@ const CacheDetail = ({ params }: PageProps) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const resolvedParams = await params;
                 const response = await fetch(`/api/maps/cache`, {
                     cache: 'no-store'
                 });

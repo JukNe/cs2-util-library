@@ -16,7 +16,6 @@ const AncientDetail = ({ params }: PageProps) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const resolvedParams = await params;
                 const response = await fetch(`/api/maps/ancient`, {
                     cache: 'no-store'
                 });

@@ -8,6 +8,7 @@ interface UtilityViewerProps {
     isEditingDescription?: boolean;
     onMediaDescriptionChange?: (mediaId: string, description: string) => void;
     pendingMediaChanges?: Record<string, string>;
+    onMediaUploaded?: () => void;
 }
 
 export interface UtilityViewerRef {
@@ -20,7 +21,8 @@ const UtilityViewer = forwardRef<UtilityViewerRef, UtilityViewerProps>((props, r
         throwingPointId,
         isEditingDescription = false,
         onMediaDescriptionChange,
-        pendingMediaChanges
+        pendingMediaChanges,
+        onMediaUploaded
     } = props;
     const mediaCarouselRef = useRef<MediaCarouselRef | null>(null);
 
@@ -48,6 +50,7 @@ const UtilityViewer = forwardRef<UtilityViewerRef, UtilityViewerProps>((props, r
                         isEditing={isEditingDescription}
                         onMediaDescriptionChange={onMediaDescriptionChange}
                         pendingMediaChanges={pendingMediaChanges}
+                        onMediaUploaded={onMediaUploaded}
                     />
                 </div>
             </div>

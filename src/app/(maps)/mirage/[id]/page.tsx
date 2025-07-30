@@ -16,7 +16,6 @@ const MirageDetail = ({ params }: PageProps) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const resolvedParams = await params;
                 const response = await fetch(`/api/maps/mirage`, {
                     cache: 'no-store'
                 });

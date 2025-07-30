@@ -11,7 +11,7 @@ const UtilityFilters = () => {
             <FilterButton type='he' title={'HE'} />
 
             <h4>Team Filters</h4>
-            <FilterButton type='terrorist' title={'T'} iconType='png' />
+            <FilterButton type='T' title={'T'} iconType='png' />
             <FilterButton type='CT' title={'CT'} iconType='png' />
         </div>
     )
