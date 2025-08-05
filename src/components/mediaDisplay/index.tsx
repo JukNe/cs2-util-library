@@ -40,10 +40,10 @@ const MediaDisplay = ({ media, onMediaDeleted }: MediaDisplayProps) => {
         setSelectedMediaIndex(index);
     };
 
-    const closeModal = () => {
+    const closeModal = useCallback(() => {
         setSelectedMedia(null);
         setSelectedMediaIndex(-1);
-    };
+    }, []);
 
     const navigateToPrevious = useCallback(() => {
         if (selectedMediaIndex > 0) {
@@ -123,7 +123,7 @@ const MediaDisplay = ({ media, onMediaDeleted }: MediaDisplayProps) => {
         return (
             <div className="media-empty-state">
                 <h3>No media found</h3>
-                <p>You haven't uploaded any media yet. Start by adding utilities to maps!</p>
+                <p>You haven&apos;t uploaded any media yet. Start by adding utilities to maps!</p>
             </div>
         );
     }

@@ -100,17 +100,17 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
         }
     };
 
-    const nextSlide = () => {
+    const nextSlide = useCallback(() => {
         setCurrentIndex((prevIndex) =>
             prevIndex === media.length - 1 ? 0 : prevIndex + 1
         );
-    };
+    }, [media.length]);
 
-    const prevSlide = () => {
+    const prevSlide = useCallback(() => {
         setCurrentIndex((prevIndex) =>
             prevIndex === 0 ? media.length - 1 : prevIndex - 1
         );
-    };
+    }, [media.length]);
 
     const goToSlide = (index: number) => {
         setCurrentIndex(index);
