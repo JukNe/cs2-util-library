@@ -92,14 +92,14 @@ const Header = () => {
     if (loading) {
         return (
             <header className='header'>
-                <Link href='/'><h4>CS2 Util Library</h4></Link>
+                <h4>CS2 Util Library</h4>
             </header>
         );
     }
 
     return (
         <header className='header'>
-            <Link href='/'><h4>CS2 Util Library</h4></Link>
+            <h4>CS2 Util Library</h4>
             {session && (
                 <div className="header-user-section">
                     <span className="user-greeting">Hello, {session.user.name}</span>

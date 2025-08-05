@@ -6,7 +6,7 @@ import { Media } from '@/types/media';
 import Image from 'next/image'
 import { useContext, useEffect, useState, useRef } from 'react';
 import Sidebar from '../sidebar';
-import { BsPlus, BsX, BsTrash, BsPencil, BsCheck, BsZoomIn, BsZoomOut, BsArrowClockwise } from 'react-icons/bs';
+import { BsPlus, BsX, BsTrash, BsPencil, BsCheck, BsZoomIn, BsZoomOut, BsArrowClockwise, BsChevronUp, BsChevronDown } from 'react-icons/bs';
 import UtilityPreview from '../utilityViewer';
 import { UtilityFilterContext } from '@/utils/contexts';
 import { UtilityViewerRef } from '../utilityViewer';
@@ -24,12 +24,16 @@ const MapViewerInner = (props: MapViewerProps) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
     const [selectedNade, setSelectedNade] = useState<TUtilityLandingPoint['utilityType']>()
     const [selectedTeam, setSelectedTeam] = useState<string>('T') // Default to Terrorist team
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
     const [selectedTP, setSelectedTP] = useState<TUtilityThrowingPoint>()
     const [selectedLP, setSelectedLP] = useState<TUtilityLandingPoint>()
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isLPModalOpen, setIsLPModalOpen] = useState(false)
+    const [isLPModalMinimized, setIsLPModalMinimized] = useState(true)
     const [isAddingThrowingPoint, setIsAddingThrowingPoint] = useState(false)
     const [hoveredTP, setHoveredTP] = useState<TUtilityThrowingPoint | null>(null)
+    const [hoveredLP, setHoveredLP] = useState<TUtilityLandingPoint | null>(null)
     const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 })
     const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null)
     const [loading, setLoading] = useState(false)
@@ -41,6 +45,7 @@ const MapViewerInner = (props: MapViewerProps) => {
     const [isSavingTitle, setIsSavingTitle] = useState(false)
     const [pendingMediaChanges, setPendingMediaChanges] = useState<Record<string, string>>({})
     const [hoveredTPMedia, setHoveredTPMedia] = useState<Media[]>([])
+    const [hoveredLPMedia, setHoveredLPMedia] = useState<Media[]>([])
     const [mediaCache, setMediaCache] = useState<Record<string, Media[]>>({})
     const [isLoadingMedia, setIsLoadingMedia] = useState(false)
     const [isAddingLandingPoint, setIsAddingLandingPoint] = useState(false)
@@ -65,28 +70,37 @@ const MapViewerInner = (props: MapViewerProps) => {
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
     const mapContainerRef = useRef<HTMLDivElement>(null)
 
-    // Fetch utilities from database on component mount
-    useEffect(() => {
-        const fetchUtilities = async () => {
-            try {
-                setLoading(true);
-                const response = await fetch(`/api/maps/${mapName}`, {
-                    credentials: 'include'
-                });
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        setUtility(result.data);
+    // Function to refresh utilities data
+    const refreshUtilities = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(`/api/maps/${mapName}`, {
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    setUtility(result.data);
+
+                    // Update selectedLP if it exists to point to the refreshed data
+                    if (selectedLP) {
+                        const updatedLP = result.data.find((lp: TUtilityLandingPoint) => lp.id === selectedLP.id);
+                        if (updatedLP) {
+                            setSelectedLP(updatedLP);
+                        }
                     }
                 }
-            } catch (error) {
-                console.error('Error fetching utilities:', error);
-            } finally {
-                setLoading(false);
             }
-        };
+        } catch (error) {
+            console.error('Error fetching utilities:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        fetchUtilities();
+    // Fetch utilities from database on component mount
+    useEffect(() => {
+        refreshUtilities();
     }, [mapName]);
 
     const NewNadeDropDown = () => {
@@ -257,7 +271,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                         Y: yPercent
                     },
                     title: `Throwing Point ${selectedLP.throwingPoints.length + 1}`,
-                    description: 'Click to edit description'
+                    description: 'Placeholder description'
                 }),
                 credentials: 'include'
             });
@@ -364,10 +378,12 @@ const MapViewerInner = (props: MapViewerProps) => {
         // Toggle selection: if clicking the same landing point, deselect it
         if (selectedLP === data) {
             setSelectedLP(undefined);
+            setIsLPModalOpen(false);
             // Reset throwing point mode when deselecting landing point
             setIsAddingThrowingPoint(false);
         } else {
             setSelectedLP(data);
+            setIsLPModalOpen(true);
         }
         setSelectedTP(undefined);
         setIsModalOpen(false);
@@ -409,6 +425,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                     setSelectedLP(undefined);
                     setSelectedTP(undefined);
                     setIsModalOpen(false);
+                    setIsLPModalOpen(false);
                     console.log('Landing point deleted successfully');
                 } else {
                     console.error('Failed to delete landing point:', result.error);
@@ -457,6 +474,11 @@ const MapViewerInner = (props: MapViewerProps) => {
                     if (selectedTP === tp) {
                         setSelectedTP(undefined);
                         setIsModalOpen(false);
+                    }
+                    // Also close landing point modal if it's open
+                    if (selectedLP) {
+                        setSelectedLP(undefined);
+                        setIsLPModalOpen(false);
                     }
                 } else {
                     console.error('Failed to delete throwing point:', result.error);
@@ -543,6 +565,71 @@ const MapViewerInner = (props: MapViewerProps) => {
         }
     };
 
+    const handleLPHover = (data: TUtilityLandingPoint, e: React.MouseEvent) => {
+        setHoveredLP(data);
+        setHoverPosition({ x: e.clientX, y: e.clientY });
+
+        // Clear existing timeout
+        if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+        }
+
+        // Set new timeout
+        const timeout = setTimeout(() => {
+            const utilityId = data.id;
+            if (!utilityId) return;
+
+            // Check if media is already cached
+            if (mediaCache[utilityId]) {
+                setHoveredLPMedia(mediaCache[utilityId]);
+                return;
+            }
+
+            // Set loading state
+            setIsLoadingMedia(true);
+
+            // Fetch media for this landing point
+            fetch(`/api/media/get?utilityId=${utilityId}`, {
+                credentials: 'include'
+            }).then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Failed to fetch media');
+            }).then(result => {
+                const media = result.media || [];
+                // Cache the media data
+                setMediaCache(prev => ({
+                    ...prev,
+                    [utilityId]: media
+                }));
+                setHoveredLPMedia(media);
+                setIsLoadingMedia(false);
+            }).catch(error => {
+                console.error('Error fetching media:', error);
+                // Cache empty array to avoid repeated failed requests
+                setMediaCache(prev => ({
+                    ...prev,
+                    [utilityId]: []
+                }));
+                setHoveredLPMedia([]);
+                setIsLoadingMedia(false);
+            });
+        }, 500);
+
+        setHoverTimeout(timeout);
+    };
+
+    const handleLPLeave = () => {
+        setHoveredLP(null);
+        setHoveredLPMedia([]);
+        setIsLoadingMedia(false);
+        if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+            setHoverTimeout(null);
+        }
+    };
+
     const handleModalClose = () => {
         setIsModalOpen(false);
         setSelectedTP(undefined);
@@ -553,12 +640,32 @@ const MapViewerInner = (props: MapViewerProps) => {
         setPendingMediaChanges({});
     };
 
+    const handleLPModalClose = () => {
+        setIsLPModalOpen(false);
+        setSelectedLP(undefined);
+        setIsEditingDescription(false);
+        setIsEditingTitle(false);
+        setEditedDescription('');
+        setEditedTitle('');
+        setPendingMediaChanges({});
+        setIsLPModalMinimized(true); // Reset to minimized when closing
+    };
+
+    const handleLPModalToggleMinimize = () => {
+        setIsLPModalMinimized(!isLPModalMinimized);
+    };
+
     const handleEditClick = () => {
         if (selectedTP) {
             setIsEditingDescription(true);
             setIsEditingTitle(true);
             setEditedDescription(selectedTP.description || '');
             setEditedTitle(selectedTP.title || '');
+        } else if (selectedLP) {
+            setIsEditingDescription(true);
+            setIsEditingTitle(true);
+            setEditedDescription(selectedLP.description || '');
+            setEditedTitle(selectedLP.title || '');
         }
     };
 
@@ -578,52 +685,49 @@ const MapViewerInner = (props: MapViewerProps) => {
     };
 
     const handleSaveAll = async () => {
-        if (!selectedTP) return;
+        if (!selectedTP && !selectedLP) return;
 
         setIsSavingDescription(true);
         setIsSavingTitle(true);
 
         try {
-            // Save title
-            const titleResponse = await fetch(`/api/utilities/throwing-points/${selectedTP.id}`, {
+            let entityId: string;
+            let entityType: 'throwing-point' | 'utility';
+
+            if (selectedTP && selectedTP.id) {
+                entityId = selectedTP.id;
+                entityType = 'throwing-point';
+            } else if (selectedLP && selectedLP.id) {
+                entityId = selectedLP.id;
+                entityType = 'utility';
+            } else {
+                return;
+            }
+
+            // Save title and description in a single request
+            const endpoint = entityType === 'throwing-point'
+                ? `/api/utilities/throwing-points/${entityId}`
+                : `/api/utilities/${entityId}`;
+
+            const response = await fetch(endpoint, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    title: editedTitle
-                }),
-                credentials: 'include'
-            });
-
-            if (!titleResponse.ok) {
-                throw new Error('Failed to save title');
-            }
-
-            const titleResult = await titleResponse.json();
-            if (!titleResult.success) {
-                throw new Error(titleResult.error || 'Failed to save title');
-            }
-
-            // Save description
-            const descResponse = await fetch(`/api/utilities/throwing-points/${selectedTP.id}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
+                    title: editedTitle,
                     description: editedDescription
                 }),
                 credentials: 'include'
             });
 
-            if (!descResponse.ok) {
-                throw new Error('Failed to save description');
+            if (!response.ok) {
+                throw new Error('Failed to save changes');
             }
 
-            const descResult = await descResponse.json();
-            if (!descResult.success) {
-                throw new Error(descResult.error || 'Failed to save description');
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to save changes');
             }
 
             // Save media descriptions
@@ -649,14 +753,30 @@ const MapViewerInner = (props: MapViewerProps) => {
             }
 
             // Update local state
-            setSelectedTP({
-                ...selectedTP,
-                title: editedTitle,
-                description: editedDescription
-            });
+            if (selectedTP) {
+                setSelectedTP({
+                    ...selectedTP,
+                    title: editedTitle,
+                    description: editedDescription
+                });
+            } else if (selectedLP) {
+                // Update the selectedLP with the new title and description
+                setSelectedLP({
+                    ...selectedLP,
+                    title: editedTitle,
+                    description: editedDescription
+                });
+            }
+
+            // Reset edit states
             setIsEditingDescription(false);
             setIsEditingTitle(false);
             setPendingMediaChanges({});
+            setEditedTitle('');
+            setEditedDescription('');
+
+            // Refresh utilities data to get the latest from database
+            await refreshUtilities();
 
         } catch (error) {
             console.error('Error saving all changes:', error);
@@ -668,10 +788,10 @@ const MapViewerInner = (props: MapViewerProps) => {
     };
 
     // Function to invalidate media cache for a specific throwing point
-    const invalidateMediaCache = (throwingPointId: string) => {
+    const invalidateMediaCache = (id: string) => {
         setMediaCache(prev => {
             const newCache = { ...prev };
-            delete newCache[throwingPointId];
+            delete newCache[id];
             return newCache;
         });
     };
@@ -793,24 +913,26 @@ const MapViewerInner = (props: MapViewerProps) => {
             )}
 
             {selectedTP && isModalOpen &&
-                <div className={'modal-wrapper'}>
-                    <div className='utility-modal-header'>
-                        <div className="modal-header-content">
-                            {isEditingTitle ? (
-                                <div className="title-edit">
-                                    <input
-                                        type="text"
-                                        value={editedTitle}
-                                        onChange={(e) => setEditedTitle(e.target.value)}
-                                        placeholder="Enter title..."
-                                        className="title-input"
-                                    />
-                                </div>
-                            ) : (
-                                <h2 style={{ fontSize: '1.5em', padding: '1em' }}>
-                                    {selectedTP.title}
-                                </h2>
-                            )}
+                <div className={'throwing-point-modal-wrapper'}>
+                    <div className='modal-header'>
+                        <div className="header-content">
+                            <div className="title-section">
+                                {isEditingTitle ? (
+                                    <div className="title-edit">
+                                        <input
+                                            type="text"
+                                            value={editedTitle}
+                                            onChange={(e) => setEditedTitle(e.target.value)}
+                                            placeholder="Enter title..."
+                                            className="title-input"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="title-display">
+                                        <h2 className="title-text">{selectedTP.title || 'No title available.'}</h2>
+                                    </div>
+                                )}
+                            </div>
                             <div className="description-section">
                                 {isEditingDescription ? (
                                     <div className="description-edit">
@@ -829,56 +951,209 @@ const MapViewerInner = (props: MapViewerProps) => {
                                 )}
                             </div>
                         </div>
-                        <div style={{ display: 'flex', height: '100%', gap: '1em', alignItems: 'center' }}>
+                        <div className="header-actions">
                             {!isEditingDescription && (
                                 <button
                                     onClick={handleEditClick}
-                                    className="edit-all-button"
+                                    className="edit-button"
                                     title="Edit title, description, and media"
                                 >
                                     <BsPencil size="1.5em" />
                                 </button>
                             )}
-                            {isEditingDescription && (
-                                <div className="unified-edit-actions">
+                            <button
+                                onClick={handleModalClose}
+                                className="close-button"
+                            >
+                                <BsX size={'2em'} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Modal Content */}
+                    <div className="modal-content">
+                        {/* Edit Actions Bar */}
+                        {isEditingDescription && (
+                            <div className="edit-actions-bar">
+                                <div className="edit-actions">
                                     <button
-                                        className="delete-throwing-point-button"
+                                        className="delete-button"
                                         onClick={(e) => handleDeleteThrowingPoint(selectedTP!, e)}
                                         disabled={isSavingTitle || isSavingDescription}
                                         title="Delete throwing point"
                                     >
-                                        <BsTrash size="1.5em" />
+                                        <BsTrash size="1.2em" />
+                                        Delete
                                     </button>
-                                    <button
-                                        className="cancel-all-button"
-                                        onClick={handleCancelEdit}
-                                        disabled={isSavingTitle || isSavingDescription}
-                                    >
-                                        <BsX size="1em" />
-                                        Cancel
-                                    </button>
-                                    <button
-                                        className="save-all-button"
-                                        onClick={handleSaveAll}
-                                        disabled={isSavingTitle || isSavingDescription}
-                                    >
-                                        <BsCheck size="1em" />
-                                        {isSavingTitle || isSavingDescription ? 'Saving...' : 'Save All'}
-                                    </button>
+                                    <div className="action-group">
+                                        <button
+                                            className="cancel-button"
+                                            onClick={handleCancelEdit}
+                                            disabled={isSavingTitle || isSavingDescription}
+                                        >
+                                            <BsX size="1em" />
+                                            Cancel
+                                        </button>
+                                        <button
+                                            className="save-button"
+                                            onClick={handleSaveAll}
+                                            disabled={isSavingTitle || isSavingDescription}
+                                        >
+                                            <BsCheck size="1em" />
+                                            {isSavingTitle || isSavingDescription ? 'Saving...' : 'Save All'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Media Content */}
+                        <div className="media-content">
+                            <UtilityPreview
+                                ref={utilityViewerRef}
+                                throwingPointId={selectedTP.id}
+                                onMediaDescriptionChange={handleMediaDescriptionChange}
+                                pendingMediaChanges={pendingMediaChanges}
+                                isEditingDescription={isEditingDescription}
+                                onMediaUploaded={() => selectedTP.id && invalidateMediaCache(selectedTP.id)}
+                            />
+                        </div>
+                    </div>
+                </div>
+            }
+
+            {/* Landing Point Modal */}
+            {selectedLP && isLPModalOpen &&
+                <div className={'modal-wrapper'}>
+                    {/* Modal Header */}
+                    <div className='modal-header'>
+                        <div className="header-content">
+                            <div className="title-section">
+                                {isEditingTitle ? (
+                                    <div className="title-edit">
+                                        <input
+                                            type="text"
+                                            value={editedTitle}
+                                            onChange={(e) => setEditedTitle(e.target.value)}
+                                            placeholder="Enter title..."
+                                            className="title-input"
+                                        />
+                                    </div>
+                                ) : (
+                                    <h2 className="modal-title">
+                                        {isEditingTitle
+                                            ? (editedTitle && editedTitle.trim() !== '' ? editedTitle : 'No title available.')
+                                            : (selectedLP.title && selectedLP.title.trim() !== ''
+                                                ? selectedLP.title
+                                                : `${selectedLP.utilityType} Utility (${selectedLP.team})`)
+                                        }
+                                    </h2>
+                                )}
+                            </div>
+
+                            {!isLPModalMinimized && (
+                                <div className="description-section">
+                                    {isEditingDescription ? (
+                                        <div className="description-edit">
+                                            <input
+                                                type="text"
+                                                value={editedDescription}
+                                                onChange={(e) => setEditedDescription(e.target.value)}
+                                                placeholder="Enter description..."
+                                                className="description-input"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="description-display">
+                                            <p className="description-text">
+                                                {isEditingDescription
+                                                    ? (editedDescription && editedDescription.trim() !== '' ? editedDescription : 'No description available.')
+                                                    : (selectedLP?.description && selectedLP.description.trim() !== ''
+                                                        ? selectedLP.description
+                                                        : `${selectedLP?.throwingPoints?.length ?? 0} throwing point${(selectedLP?.throwingPoints?.length ?? 0) !== 1 ? 's' : ''} attached`)
+                                                }
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
-                            <button onClick={handleModalClose} style={{ border: 'none', height: '100%', width: '5em' }}><BsX size={'2em'} />
+                        </div>
+
+                        <div className="header-actions">
+                            {!isEditingDescription && !isLPModalMinimized && (
+                                <button
+                                    onClick={handleEditClick}
+                                    className="edit-button"
+                                    title="Edit title, description, and media"
+                                >
+                                    <BsPencil size="1.5em" />
+                                </button>
+                            )}
+                            <button
+                                onClick={handleLPModalToggleMinimize}
+                                className="minimize-button"
+                                title={isLPModalMinimized ? "Expand" : "Minimize"}
+                            >
+                                {isLPModalMinimized ? <BsChevronUp size={'1.5em'} /> : <BsChevronDown size={'1.5em'} />}
+                            </button>
+                            <button
+                                onClick={handleLPModalClose}
+                                className="close-button"
+                            >
+                                <BsX size={'2em'} />
                             </button>
                         </div>
                     </div>
-                    <UtilityPreview
-                        ref={utilityViewerRef}
-                        throwingPointId={selectedTP.id}
-                        onMediaDescriptionChange={handleMediaDescriptionChange}
-                        pendingMediaChanges={pendingMediaChanges}
-                        isEditingDescription={isEditingDescription}
-                        onMediaUploaded={() => selectedTP.id && invalidateMediaCache(selectedTP.id)}
-                    />
+
+                    {/* Modal Content */}
+                    {!isLPModalMinimized && (
+                        <div className="modal-content">
+                            {/* Edit Actions Bar */}
+                            {isEditingDescription && (
+                                <div className="edit-actions-bar">
+                                    <div className="edit-actions">
+                                        <button
+                                            className="delete-button"
+                                            onClick={(e) => handleDeleteLandingPoint(e)}
+                                            disabled={isSavingTitle || isSavingDescription}
+                                            title="Delete landing point"
+                                        >
+                                            <BsTrash size="1.2em" />
+                                            Delete
+                                        </button>
+                                        <div className="action-group">
+                                            <button
+                                                className="cancel-button"
+                                                onClick={handleCancelEdit}
+                                                disabled={isSavingTitle || isSavingDescription}
+                                            >
+                                                <BsX size="1em" />
+                                                Cancel
+                                            </button>
+                                            <button
+                                                className="save-button"
+                                                onClick={handleSaveAll}
+                                                disabled={isSavingTitle || isSavingDescription}
+                                            >
+                                                <BsCheck size="1em" />
+                                                Save All
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Utility Preview */}
+                            <UtilityPreview
+                                ref={utilityViewerRef}
+                                utilityId={selectedLP?.id ?? ''}
+                                onMediaDescriptionChange={handleMediaDescriptionChange}
+                                pendingMediaChanges={pendingMediaChanges}
+                                isEditingDescription={isEditingDescription || isEditingTitle}
+                                onMediaUploaded={() => selectedLP?.id && invalidateMediaCache(selectedLP.id)}
+                            />
+                        </div>
+                    )}
                 </div>
             }
 
@@ -1021,8 +1296,206 @@ const MapViewerInner = (props: MapViewerProps) => {
                 </div>
             )}
 
+            {/* Landing Point Hover Preview */}
+            {hoveredLP && (
+                <div
+                    className="hover-preview"
+                    style={{
+                        position: 'fixed',
+                        left: hoverPosition.x + 10,
+                        top: hoverPosition.y - 10,
+                        zIndex: 1000,
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        borderRadius: '8px',
+                        padding: '8px',
+                        maxWidth: '200px',
+                        pointerEvents: 'none'
+                    }}
+                >
+                    {/* Landing Point Info */}
+                    <div style={{ marginBottom: '8px' }}>
+                        <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>
+                            {hoveredLP.title && hoveredLP.title.trim() !== ''
+                                ? hoveredLP.title
+                                : `${hoveredLP.utilityType} Utility (${hoveredLP.team})`}
+                        </div>
+                        {hoveredLP.description && hoveredLP.description.trim() !== '' && (
+                            <div style={{ color: '#ccc', fontSize: '12px', marginTop: '4px' }}>
+                                {hoveredLP.description}
+                            </div>
+                        )}
+                        {(!hoveredLP.description || hoveredLP.description.trim() === '') && (
+                            <div style={{ color: '#aaa', fontSize: '11px', marginTop: '4px' }}>
+                                {hoveredLP.throwingPoints.length} throwing point{hoveredLP.throwingPoints.length !== 1 ? 's' : ''} attached
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Media Preview (if any) */}
+                    {hoveredLPMedia.length > 0 && (
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                            {/* Show first media file */}
+                            {(() => {
+                                const firstMedia = hoveredLPMedia[0];
+                                if (firstMedia && firstMedia.url) {
+                                    if (firstMedia.type === 'image') {
+                                        return (
+                                            <div
+                                                style={{
+                                                    width: '120px',
+                                                    height: '80px',
+                                                    borderRadius: '4px',
+                                                    overflow: 'hidden',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >
+                                                <img
+                                                    src={firstMedia.url}
+                                                    alt="Media preview"
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        objectFit: 'cover'
+                                                    }}
+                                                />
+                                            </div>
+                                        );
+                                    } else if (firstMedia.type === 'video') {
+                                        return (
+                                            <div
+                                                style={{
+                                                    width: '120px',
+                                                    height: '80px',
+                                                    backgroundColor: '#333',
+                                                    borderRadius: '4px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    position: 'relative'
+                                                }}
+                                            >
+                                                <video
+                                                    src={firstMedia.url}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        objectFit: 'cover'
+                                                    }}
+                                                    muted
+                                                    loop
+                                                    autoPlay
+                                                />
+                                                <div
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: '4px',
+                                                        right: '4px',
+                                                        backgroundColor: 'rgba(0,0,0,0.7)',
+                                                        color: '#fff',
+                                                        fontSize: '10px',
+                                                        padding: '2px 4px',
+                                                        borderRadius: '2px'
+                                                    }}
+                                                >
+                                                    VID
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                }
+                                return null;
+                            })()}
+
+                            {/* Show count if more than one media */}
+                            {hoveredLPMedia.length > 1 && (
+                                <div
+                                    style={{
+                                        width: '120px',
+                                        height: '80px',
+                                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                        borderRadius: '4px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: '#fff',
+                                        fontSize: '12px',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    +{hoveredLPMedia.length - 1}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Media Status Message */}
+                    {isLoadingMedia ? (
+                        <div style={{ color: '#999', fontSize: '12px', fontStyle: 'italic' }}>
+                            Loading...
+                        </div>
+                    ) : hoveredLPMedia.length === 0 && (
+                        <div style={{ color: '#999', fontSize: '12px', fontStyle: 'italic' }}>
+                            No media attached
+                        </div>
+                    )}
+                </div>
+            )}
+
             <div style={{ display: 'flex', flexDirection: 'row', height: '100%' }}>
-                <Sidebar />
+                <Sidebar onCollapseChange={setIsSidebarCollapsed} />
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'flex-start',
+                    top: '7em',
+                    left: isSidebarCollapsed ? '60px' : '240px',
+                    zIndex: 100,
+                    position: 'fixed',
+                    transition: 'left 0.3s ease'
+                }}  >
+                    <NewNadeDropDown />
+
+                    {/* Zoom Controls */}
+                    <div className="zoom-controls">
+                        <div className="zoom-buttons">
+                            <button
+                                onClick={handleZoomOut}
+                                className="zoom-button"
+                                title="Zoom Out"
+                                disabled={zoom <= 0.5}
+                            >
+                                <BsZoomOut size="16" />
+                            </button>
+                            <button
+                                onClick={handleResetZoom}
+                                className="zoom-button reset-button"
+                                title="Reset to 100%"
+                            >
+                                <BsArrowClockwise size="16" />
+                            </button>
+                            <button
+                                onClick={handleZoomIn}
+                                className="zoom-button"
+                                title="Zoom In"
+                                disabled={zoom >= 5}
+                            >
+                                <BsZoomIn size="16" />
+                            </button>
+                        </div>
+                        <input
+                            type="range"
+                            min="0.5"
+                            max="5"
+                            step="0.1"
+                            value={zoom}
+                            onChange={handleZoomChange}
+                            className="zoom-slider"
+                            style={{ width: '100px', height: '8px' }}
+                        />
+                        <span className="zoom-value">{Math.round(zoom * 100)}%</span>
+                    </div>
+                </div>
                 <div
                     ref={mapContainerRef}
                     onClick={handleMapClick}
@@ -1033,7 +1506,11 @@ const MapViewerInner = (props: MapViewerProps) => {
                     onWheel={handleWheel}
                     id='map-overview'
                     className={`map-overview ${mapName === 'nuke' ? 'nuke-map' : ''}`}
-                    style={{ cursor: isDragging ? 'grabbing' : (zoom > 1 ? 'grab' : 'auto') }}
+                    style={{
+                        cursor: isDragging ? 'grabbing' : (zoom > 1 ? 'grab' : 'auto'),
+                        paddingLeft: isSidebarCollapsed ? '60px' : '240px',
+                        transition: 'padding-left 0.3s ease'
+                    }}
                 >
                     {loading && (
                         <div className="loading-overlay">
@@ -1089,6 +1566,8 @@ const MapViewerInner = (props: MapViewerProps) => {
                                         <button
                                             className={`utility-lp-button ${isSelected ? 'selected' : ''}`}
                                             onClick={(e) => handleLPClick(item, e)}
+                                            onMouseEnter={(e) => handleLPHover(item, e)}
+                                            onMouseLeave={handleLPLeave}
                                             style={{
                                                 left: `${item.position.X}%`,
                                                 top: `${item.position.Y}%`,
@@ -1148,55 +1627,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                                     </div>)
                             })}
                     </div>
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        top: '7em',
-                        position: 'fixed',
-                        width: typeof window !== 'undefined' && window.location.pathname === '/nuke' ? '78%' : '65%',
-                    }}  >
-                        <NewNadeDropDown />
 
-                        {/* Zoom Controls */}
-                        <div className="zoom-controls">
-                            <div className="zoom-buttons">
-                                <button
-                                    onClick={handleZoomOut}
-                                    className="zoom-button"
-                                    title="Zoom Out"
-                                    disabled={zoom <= 0.5}
-                                >
-                                    <BsZoomOut size="16" />
-                                </button>
-                                <button
-                                    onClick={handleResetZoom}
-                                    className="zoom-button reset-button"
-                                    title="Reset to 100%"
-                                >
-                                    <BsArrowClockwise size="16" />
-                                </button>
-                                <button
-                                    onClick={handleZoomIn}
-                                    className="zoom-button"
-                                    title="Zoom In"
-                                    disabled={zoom >= 5}
-                                >
-                                    <BsZoomIn size="16" />
-                                </button>
-                            </div>
-                            <input
-                                type="range"
-                                min="0.5"
-                                max="5"
-                                step="0.1"
-                                value={zoom}
-                                onChange={handleZoomChange}
-                                className="zoom-slider"
-                                style={{ width: '100px', height: '8px' }}
-                            />
-                            <span className="zoom-value">{Math.round(zoom * 100)}%</span>
-                        </div>
-                    </div>
                 </div>
             </div>
         </>

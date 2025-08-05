@@ -51,6 +51,8 @@ export async function getMapData(mapName: string, userId?: string): Promise<TUti
       map: mapName,
       utilityType: utility.utilityType,
       team: utility.team,
+      title: utility.title,
+      description: utility.description || '',
       position: {
         X: utility.landingPointX,
         Y: utility.landingPointY

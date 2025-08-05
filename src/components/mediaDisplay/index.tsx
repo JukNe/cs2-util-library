@@ -1,121 +1,260 @@
-import { useState, useEffect } from 'react';
+'use client'
+
 import { Media } from '@/types/media';
-import { BsTrash } from 'react-icons/bs';
 import Image from 'next/image';
+import { useState, useEffect } from 'react';
+import { BsTrash, BsChevronLeft, BsChevronRight } from 'react-icons/bs';
 import './style.scss';
 
 interface MediaDisplayProps {
-    utilityId?: string;
-    throwingPointId?: string;
+    media: Media[];
     onMediaDeleted?: (mediaId: string) => void;
 }
 
-const MediaDisplay = ({ utilityId, throwingPointId, onMediaDeleted }: MediaDisplayProps) => {
-    const [media, setMedia] = useState<Media[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [deleting, setDeleting] = useState<string | null>(null);
+const MediaDisplay = ({ media, onMediaDeleted }: MediaDisplayProps) => {
+    const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
+    const [selectedMediaIndex, setSelectedMediaIndex] = useState<number>(-1);
+    const [deletingMedia, setDeletingMedia] = useState<string | null>(null);
 
-    const fetchMedia = async () => {
-        try {
-            const params = new URLSearchParams();
-            if (utilityId) params.append('utilityId', utilityId);
-            if (throwingPointId) params.append('throwingPointId', throwingPointId);
+    const getMediaContext = (mediaItem: Media) => {
+        if (mediaItem.utility) {
+            return `${mediaItem.utility.map.displayName} - ${mediaItem.utility.title}`;
+        }
+        if (mediaItem.throwingPoint) {
+            return `${mediaItem.throwingPoint.utility.map.displayName} - ${mediaItem.throwingPoint.utility.title} - ${mediaItem.throwingPoint.title}`;
+        }
+        return 'Unknown context';
+    };
 
-            const response = await fetch(`/api/media/get?${params}`);
-            if (response.ok) {
-                const data = await response.json();
-                setMedia(data.media || []);
-            }
-        } catch (error) {
-            console.error('Error fetching media:', error);
-        } finally {
-            setLoading(false);
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
+
+    const handleMediaClick = (mediaItem: Media) => {
+        const index = media.findIndex(item => item.id === mediaItem.id);
+        setSelectedMedia(mediaItem);
+        setSelectedMediaIndex(index);
+    };
+
+    const closeModal = () => {
+        setSelectedMedia(null);
+        setSelectedMediaIndex(-1);
+    };
+
+    const navigateToPrevious = () => {
+        if (selectedMediaIndex > 0) {
+            const newIndex = selectedMediaIndex - 1;
+            setSelectedMediaIndex(newIndex);
+            setSelectedMedia(media[newIndex]);
         }
     };
 
-    const handleDelete = async (mediaId: string) => {
-        if (!confirm('Are you sure you want to delete this media?')) {
+    const navigateToNext = () => {
+        if (selectedMediaIndex < media.length - 1) {
+            const newIndex = selectedMediaIndex + 1;
+            setSelectedMediaIndex(newIndex);
+            setSelectedMedia(media[newIndex]);
+        }
+    };
+
+    // Handle keyboard navigation
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (!selectedMedia) return;
+
+            switch (event.key) {
+                case 'ArrowLeft':
+                    event.preventDefault();
+                    navigateToPrevious();
+                    break;
+                case 'ArrowRight':
+                    event.preventDefault();
+                    navigateToNext();
+                    break;
+                case 'Escape':
+                    event.preventDefault();
+                    closeModal();
+                    break;
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [selectedMedia, selectedMediaIndex, media]);
+
+    const handleDeleteMedia = async (mediaId: string, e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent modal from opening
+
+        if (!confirm('Are you sure you want to delete this media? This action cannot be undone.')) {
             return;
         }
 
-        setDeleting(mediaId);
+        setDeletingMedia(mediaId);
         try {
             const response = await fetch(`/api/media/delete?mediaId=${mediaId}`, {
                 method: 'DELETE',
+                credentials: 'include'
             });
 
             if (response.ok) {
-                setMedia(prev => prev.filter(m => m.id !== mediaId));
+                // Call the callback to update the parent component
                 if (onMediaDeleted) {
                     onMediaDeleted(mediaId);
                 }
             } else {
-                alert('Failed to delete media');
+                const result = await response.json();
+                alert(result.error || 'Failed to delete media');
             }
         } catch (error) {
             console.error('Error deleting media:', error);
             alert('Failed to delete media');
         } finally {
-            setDeleting(null);
+            setDeletingMedia(null);
         }
     };
 
-    useEffect(() => {
-        fetchMedia();
-    }, [utilityId, throwingPointId]);
-
-    if (loading) {
-        return <div>Loading media...</div>;
-    }
-
     if (media.length === 0) {
-        return <div>No media uploaded yet.</div>;
+        return (
+            <div className="media-empty-state">
+                <h3>No media found</h3>
+                <p>You haven't uploaded any media yet. Start by adding utilities to maps!</p>
+            </div>
+        );
     }
 
     return (
         <div className="media-display">
-            <h4>Media Files</h4>
             <div className="media-grid">
-                {media.map((item) => (
-                    <div key={item.id} className="media-item">
-                        {item.type === 'image' || item.type === 'gif' ? (
-                            <div className="media-preview-container">
-                                <Image
-                                    src={item.url}
-                                    alt={item.title || 'Media'}
-                                    className="media-preview"
-                                    unoptimized
-                                    fill
-                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                {media.map((mediaItem) => (
+                    <div
+                        key={mediaItem.id}
+                        className="media-item"
+                        onClick={() => handleMediaClick(mediaItem)}
+                    >
+                        <div className="media-preview">
+                            {mediaItem.type === 'video' ? (
+                                <video
+                                    src={mediaItem.url}
+                                    className="media-thumbnail"
+                                    muted
+                                    onMouseEnter={(e) => (e.target as HTMLVideoElement).play()}
+                                    onMouseLeave={(e) => (e.target as HTMLVideoElement).pause()}
                                 />
-                            </div>
-                        ) : (
-                            <video
-                                src={item.url}
-                                controls
-                                className="media-preview"
-                            />
-                        )}
-
-                        <div className="media-info">
-                            <p className="media-title">{item.title}</p>
-                            {item.description && (
-                                <p className="media-description">{item.description}</p>
+                            ) : (
+                                <Image
+                                    src={mediaItem.url}
+                                    alt={mediaItem.title || 'Media'}
+                                    width={200}
+                                    height={150}
+                                    className="media-thumbnail"
+                                />
                             )}
-                            <p className="media-type">{item.type}</p>
+                            <button
+                                className="delete-media-btn"
+                                onClick={(e) => handleDeleteMedia(mediaItem.id, e)}
+                                disabled={deletingMedia === mediaItem.id}
+                                title="Delete media"
+                            >
+                                <BsTrash size="1em" />
+                            </button>
                         </div>
-
-                        <button
-                            className="delete-media-btn"
-                            onClick={() => handleDelete(item.id)}
-                            disabled={deleting === item.id}
-                            title="Delete media"
-                        >
-                            <BsTrash size="1em" />
-                        </button>
+                        <div className="media-info">
+                            <h4>{mediaItem.title || 'Untitled'}</h4>
+                            <p className="media-context">{getMediaContext(mediaItem)}</p>
+                            <p className="media-date">{formatDate(mediaItem.createdAt)}</p>
+                            {mediaItem.description && (
+                                <p className="media-description">{mediaItem.description}</p>
+                            )}
+                        </div>
                     </div>
                 ))}
             </div>
+
+            {/* Modal for full-size view */}
+            {selectedMedia && (
+                <div className="media-modal" onClick={closeModal}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="modal-close" onClick={closeModal}>×</button>
+                        <button
+                            className="modal-delete-btn"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteMedia(selectedMedia.id, e);
+                                closeModal();
+                            }}
+                            disabled={deletingMedia === selectedMedia.id}
+                            title="Delete media"
+                        >
+                            <BsTrash size="1.2em" />
+                        </button>
+
+                        {/* Navigation Arrows */}
+                        {selectedMediaIndex > 0 && (
+                            <button
+                                className="modal-nav-btn modal-nav-left"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigateToPrevious();
+                                }}
+                                title="Previous media (←)"
+                            >
+                                <BsChevronLeft size="2em" />
+                            </button>
+                        )}
+
+                        {selectedMediaIndex < media.length - 1 && (
+                            <button
+                                className="modal-nav-btn modal-nav-right"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigateToNext();
+                                }}
+                                title="Next media (→)"
+                            >
+                                <BsChevronRight size="2em" />
+                            </button>
+                        )}
+
+                        <div className="modal-media">
+                            {selectedMedia.type === 'video' ? (
+                                <video
+                                    src={selectedMedia.url}
+                                    controls
+                                    className="modal-video"
+                                />
+                            ) : (
+                                <Image
+                                    src={selectedMedia.url}
+                                    alt={selectedMedia.title || 'Media'}
+                                    width={800}
+                                    height={600}
+                                    className="modal-image"
+                                />
+                            )}
+                        </div>
+
+                        {/* Media Counter */}
+                        <div className="modal-counter">
+                            {selectedMediaIndex + 1} / {media.length}
+                        </div>
+
+                        <div className="modal-info">
+                            <h3>{selectedMedia.title || 'Untitled'}</h3>
+                            <p className="modal-context">{getMediaContext(selectedMedia)}</p>
+                            <p className="modal-date">{formatDate(selectedMedia.createdAt)}</p>
+                            {selectedMedia.description && (
+                                <p className="modal-description">{selectedMedia.description}</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

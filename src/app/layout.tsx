@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "./globals.css";
+import "./globals.scss";
 import Header from "@/components/header";
 import Navbar from "@/components/navbar";
 
@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <main style={{ height: '100vh' }}>
+        <main>
           <Header />
           <Navbar />
           {children}

@@ -135,4 +135,61 @@ export async function updateMediaMetadata(
     where: { id: mediaId },
     data: updates,
   });
+}
+
+/**
+ * Get all media for a user
+ */
+export async function getUserMedia(userId: string): Promise<Media[]> {
+  return await prisma.media.findMany({
+    where: {
+      OR: [
+        {
+          utility: {
+            createdBy: userId
+          }
+        },
+        {
+          throwingPoint: {
+            utility: {
+              createdBy: userId
+            }
+          }
+        }
+      ]
+    },
+    include: {
+      utility: {
+        select: {
+          id: true,
+          title: true,
+          map: {
+            select: {
+              name: true,
+              displayName: true
+            }
+          }
+        }
+      },
+      throwingPoint: {
+        select: {
+          id: true,
+          title: true,
+          utility: {
+            select: {
+              id: true,
+              title: true,
+              map: {
+                select: {
+                  name: true,
+                  displayName: true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    orderBy: { createdAt: 'desc' },
+  });
 } 

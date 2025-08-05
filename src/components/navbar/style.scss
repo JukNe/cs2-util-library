@@ -4,17 +4,16 @@
     padding: 0.5rem 0;
     position: sticky;
     top: 2.5em; // Account for header height
-    z-index: 100;
-    backdrop-filter: blur(10px);
+    z-index: 1002;
 }
 
 .navbar-container {
-    max-width: 1200px;
     margin: 0 auto;
     padding: 0 1rem;
     display: flex;
     gap: 1rem;
     align-items: center;
+    justify-content: flex-start;
 }
 
 .navbar-button {

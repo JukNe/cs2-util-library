@@ -8,4 +8,24 @@ export interface Media {
     updatedAt: string;
     utilityId?: string;
     throwingPointId?: string;
+    utility?: {
+        id: string;
+        title: string;
+        map: {
+            name: string;
+            displayName: string;
+        };
+    };
+    throwingPoint?: {
+        id: string;
+        title: string;
+        utility: {
+            id: string;
+            title: string;
+            map: {
+                name: string;
+                displayName: string;
+            };
+        };
+    };
 } 
