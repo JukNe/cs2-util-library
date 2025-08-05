@@ -73,7 +73,7 @@ const LoginForm = () => {
     };
 
     return (
-        <div style={{ maxWidth: 400, margin: "0 auto", padding: "1em", backgroundColor: "#3c3c3c", borderRadius: "0.5em", alignContent: "center" }}>
+        <div style={{ maxWidth: 400, margin: "8em auto", padding: "1em", backgroundColor: "#3c3c3c", borderRadius: "0.5em", alignContent: "center" }}>
             {isSignUp ? (
                 <SignUp onBackToLogin={() => setIsSignUp(false)} />
             ) : (

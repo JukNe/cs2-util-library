@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateSession } from "./lib/session";
 
 export async function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
+    const sessionToken = req.cookies.get("session")?.value;
 
     // Exclude auth-related API routes and static files from authentication
     const publicPaths = [
@@ -22,18 +22,15 @@ export async function middleware(req: NextRequest) {
         return NextResponse.next();
     }
 
-    // Validate session
-    const sessionValidation = await validateSession(req);
-
-    // If no valid session and not on login page, redirect to login
-    if (!sessionValidation.success && pathname !== "/login") {
-        console.log('Redirecting to login - no valid session');
+    // If no session token and not on login page, redirect to login
+    if (!sessionToken && pathname !== "/login") {
+        console.log('Redirecting to login - no session');
         return NextResponse.redirect(new URL("/login", req.url));
     }
 
-    // If user has valid session and is on login page, redirect to home
-    if (sessionValidation.success && pathname === "/login") {
-        console.log('Redirecting to home - has valid session');
+    // If user has session token and is on login page, redirect to home
+    if (sessionToken && pathname === "/login") {
+        console.log('Redirecting to home - has session');
         return NextResponse.redirect(new URL("/", req.url));
     }
 
