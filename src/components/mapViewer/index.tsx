@@ -96,7 +96,7 @@ const MapViewerInner = (props: MapViewerProps) => {
         } finally {
             setLoading(false);
         }
-    }, [mapName, selectedLP]);
+    }, [mapName]);
 
     // Fetch utilities from database on component mount
     useEffect(() => {

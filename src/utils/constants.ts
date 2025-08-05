@@ -1,1 +1,1 @@
-export const Maps = ['dust2', 'mirage', 'nuke', 'inferno', 'ancient', 'anubis', 'vertigo', 'train', 'overpass', 'cache']
+export const Maps = ['ancient', 'anubis', 'cache', 'dust2', 'inferno', 'mirage', 'nuke', 'overpass', 'train', 'vertigo']
