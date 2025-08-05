@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import './style.scss'
-import Link from "next/link"
 import SidebarLink from "./sidebarLink"
 import { Maps } from '@/utils/constants'
 import UtilityFilters from './utilityFilters'

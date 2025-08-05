@@ -4,7 +4,7 @@ import './style.scss'
 import { TUtilityThrowingPoint, TUtilityLandingPoint } from '@/types/utilities';
 import { Media } from '@/types/media';
 import Image from 'next/image'
-import { useContext, useEffect, useState, useRef } from 'react';
+import { useContext, useEffect, useState, useRef, useCallback } from 'react';
 import Sidebar from '../sidebar';
 import { BsPlus, BsX, BsTrash, BsPencil, BsCheck, BsZoomIn, BsZoomOut, BsArrowClockwise, BsChevronUp, BsChevronDown } from 'react-icons/bs';
 import UtilityPreview from '../utilityViewer';
@@ -71,7 +71,7 @@ const MapViewerInner = (props: MapViewerProps) => {
     const mapContainerRef = useRef<HTMLDivElement>(null)
 
     // Function to refresh utilities data
-    const refreshUtilities = async () => {
+    const refreshUtilities = useCallback(async () => {
         try {
             setLoading(true);
             const response = await fetch(`/api/maps/${mapName}`, {
@@ -96,12 +96,12 @@ const MapViewerInner = (props: MapViewerProps) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [mapName, selectedLP]);
 
     // Fetch utilities from database on component mount
     useEffect(() => {
         refreshUtilities();
-    }, [mapName]);
+    }, [refreshUtilities]);
 
     const NewNadeDropDown = () => {
         return (
@@ -221,7 +221,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                 if (result.success) {
                     // Add to local state
                     setUtility((previous) => [...previous, result.data]);
-                    console.log(selectedNade, 'for team', selectedTeam, 'saved at', xPercent.toFixed(2) + '%, ' + yPercent.toFixed(2) + '%');
+
                 } else {
                     console.error('Failed to save utility:', result.error);
                     alert('Failed to save utility. Please try again.');
@@ -291,7 +291,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                             return item;
                         });
                     });
-                    console.log('Throwing point saved at', xPercent.toFixed(2) + '%, ' + yPercent.toFixed(2) + '%');
+
                 } else {
                     console.error('Failed to save throwing point:', result.error);
                     alert('Failed to save throwing point. Please try again.');
@@ -407,7 +407,7 @@ const MapViewerInner = (props: MapViewerProps) => {
             return;
         }
 
-        console.log('Deleting landing point:', selectedLP.id);
+
 
         try {
             const response = await fetch(`/api/utilities/${selectedLP.id}`, {
@@ -415,18 +415,15 @@ const MapViewerInner = (props: MapViewerProps) => {
                 credentials: 'include'
             });
 
-            console.log('Delete response status:', response.status);
-
             if (response.ok) {
                 const result = await response.json();
-                console.log('Delete response:', result);
                 if (result.success) {
                     setUtility((previous) => previous.filter(item => item !== selectedLP))
                     setSelectedLP(undefined);
                     setSelectedTP(undefined);
                     setIsModalOpen(false);
                     setIsLPModalOpen(false);
-                    console.log('Landing point deleted successfully');
+
                 } else {
                     console.error('Failed to delete landing point:', result.error);
                     alert('Failed to delete landing point. Please try again.');
@@ -1205,9 +1202,11 @@ const MapViewerInner = (props: MapViewerProps) => {
                                                     justifyContent: 'center'
                                                 }}
                                             >
-                                                <img
+                                                <Image
                                                     src={firstMedia.url}
                                                     alt="Media preview"
+                                                    width={120}
+                                                    height={80}
                                                     style={{
                                                         width: '100%',
                                                         height: '100%',
@@ -1351,9 +1350,11 @@ const MapViewerInner = (props: MapViewerProps) => {
                                                     justifyContent: 'center'
                                                 }}
                                             >
-                                                <img
+                                                <Image
                                                     src={firstMedia.url}
                                                     alt="Media preview"
+                                                    width={120}
+                                                    height={80}
                                                     style={{
                                                         width: '100%',
                                                         height: '100%',
@@ -1505,7 +1506,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                     onMouseLeave={handleMouseUp}
                     onWheel={handleWheel}
                     id='map-overview'
-                    className={`map-overview ${mapName === 'nuke' ? 'nuke-map' : ''}`}
+                    className="map-overview"
                     style={{
                         cursor: isDragging ? 'grabbing' : (zoom > 1 ? 'grab' : 'auto'),
                         paddingLeft: isSidebarCollapsed ? '60px' : '240px',

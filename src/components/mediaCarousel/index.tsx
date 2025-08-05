@@ -1,7 +1,8 @@
-import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { Media } from '@/types/media';
-import { BsChevronLeft, BsChevronRight, BsTrash, BsFullscreen, BsFullscreenExit, BsX, BsPlus } from 'react-icons/bs';
+import { BsChevronLeft, BsChevronRight, BsTrash, BsFullscreen, BsX } from 'react-icons/bs';
 import MediaUploader from '../mediaUploader';
+import Image from 'next/image';
 import './style.scss';
 
 interface MediaCarouselProps {
@@ -35,7 +36,7 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
     const [deleting, setDeleting] = useState<string | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
 
-    const fetchMedia = async () => {
+    const fetchMedia = useCallback(async () => {
         try {
             const params = new URLSearchParams();
             if (utilityId) params.append('utilityId', utilityId);
@@ -51,7 +52,7 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
         } finally {
             setLoading(false);
         }
-    };
+    }, [utilityId, throwingPointId]);
 
     // Expose fetchMedia function to parent component
     useImperativeHandle(ref, () => ({
@@ -65,7 +66,7 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
         if (onMediaUploaded) {
             onMediaUploaded();
         }
-        console.log('Media uploaded successfully');
+
     };
 
     const handleDelete = async (mediaId: string) => {
@@ -119,7 +120,7 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
         setIsFullscreen(!isFullscreen);
     };
 
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = useCallback((e: KeyboardEvent) => {
         if (!isFullscreen) return;
 
         switch (e.key) {
@@ -133,11 +134,11 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
                 nextSlide();
                 break;
         }
-    };
+    }, [isFullscreen, prevSlide, nextSlide]);
 
     useEffect(() => {
         fetchMedia();
-    }, [utilityId, throwingPointId]);
+    }, [fetchMedia]);
 
     useEffect(() => {
         // Reset current index when media changes
@@ -157,7 +158,7 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
             document.removeEventListener('keydown', handleKeyDown);
             document.body.style.overflow = 'unset';
         };
-    }, [isFullscreen]);
+    }, [isFullscreen, handleKeyDown]);
 
     if (loading) {
         return <div className="carousel-loading">Loading media...</div>;
@@ -173,9 +174,11 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
     const renderMedia = (mediaItem: Media, isFullscreenMode: boolean = false) => (
         <div className={`carousel-media ${isFullscreenMode ? 'fullscreen-media' : ''}`}>
             {mediaItem.type === 'image' || mediaItem.type === 'gif' ? (
-                <img
+                <Image
                     src={mediaItem.url}
                     alt={mediaItem.title || 'Media'}
+                    width={800}
+                    height={600}
                     className={`carousel-image ${isFullscreenMode ? 'fullscreen-image' : ''}`}
                 />
             ) : (

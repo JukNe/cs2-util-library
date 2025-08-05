@@ -5,18 +5,24 @@ import { useEffect, useState } from 'react';
 
 interface PageProps {
     params: Promise<{
+        mapname: string;
         id: string;
     }>;
 }
 
-const NukeDetail = ({ params }: PageProps) => {
+const MapDetail = ({ params }: PageProps) => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [mapName, setMapName] = useState('');
 
     useEffect(() => {
         const fetchData = async () => {
+            const resolvedParams = await params;
+            const mapName = resolvedParams.mapname;
+            setMapName(mapName);
+
             try {
-                const response = await fetch(`/api/maps/nuke`, {
+                const response = await fetch(`/api/maps/${mapName}`, {
                     cache: 'no-store'
                 });
 
@@ -40,9 +46,7 @@ const NukeDetail = ({ params }: PageProps) => {
         return <div>Loading...</div>;
     }
 
-    return (
-        <MapViewer mapName='nuke' data={data} />
-    )
+    return <MapViewer mapName={mapName} data={data} />
 }
 
-export default NukeDetail;
+export default MapDetail; 

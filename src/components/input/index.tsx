@@ -23,7 +23,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         const switchType = (e: React.MouseEvent<HTMLButtonElement>) => {
             e.preventDefault();
             setInputType(inputType === 'text' ? 'password' : 'text');
-            console.log(type)
+
         };
 
         return (

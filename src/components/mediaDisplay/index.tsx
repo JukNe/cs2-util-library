@@ -2,7 +2,7 @@
 
 import { Media } from '@/types/media';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { BsTrash, BsChevronLeft, BsChevronRight } from 'react-icons/bs';
 import './style.scss';
 
@@ -45,21 +45,21 @@ const MediaDisplay = ({ media, onMediaDeleted }: MediaDisplayProps) => {
         setSelectedMediaIndex(-1);
     };
 
-    const navigateToPrevious = () => {
+    const navigateToPrevious = useCallback(() => {
         if (selectedMediaIndex > 0) {
             const newIndex = selectedMediaIndex - 1;
             setSelectedMediaIndex(newIndex);
             setSelectedMedia(media[newIndex]);
         }
-    };
+    }, [selectedMediaIndex, media]);
 
-    const navigateToNext = () => {
+    const navigateToNext = useCallback(() => {
         if (selectedMediaIndex < media.length - 1) {
             const newIndex = selectedMediaIndex + 1;
             setSelectedMediaIndex(newIndex);
             setSelectedMedia(media[newIndex]);
         }
-    };
+    }, [selectedMediaIndex, media]);
 
     // Handle keyboard navigation
     useEffect(() => {
@@ -86,7 +86,7 @@ const MediaDisplay = ({ media, onMediaDeleted }: MediaDisplayProps) => {
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, [selectedMedia, selectedMediaIndex, media]);
+    }, [selectedMedia, selectedMediaIndex, media, navigateToPrevious, navigateToNext, closeModal]);
 
     const handleDeleteMedia = async (mediaId: string, e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent modal from opening
@@ -202,7 +202,7 @@ const MediaDisplay = ({ media, onMediaDeleted }: MediaDisplayProps) => {
                                     e.stopPropagation();
                                     navigateToPrevious();
                                 }}
-                                title="Previous media (←)"
+                                title="Previous media (&#8592;)"
                             >
                                 <BsChevronLeft size="2em" />
                             </button>
@@ -215,7 +215,7 @@ const MediaDisplay = ({ media, onMediaDeleted }: MediaDisplayProps) => {
                                     e.stopPropagation();
                                     navigateToNext();
                                 }}
-                                title="Next media (→)"
+                                title="Next media (&#8594;)"
                             >
                                 <BsChevronRight size="2em" />
                             </button>

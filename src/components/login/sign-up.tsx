@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form"
-import { useRouter } from "next/navigation";
 import Input from "../input";
 
 type Inputs = {
@@ -17,7 +16,6 @@ interface SignUpProps {
 }
 
 export const SignUp = ({ onBackToLogin }: SignUpProps) => {
-    const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -30,7 +28,6 @@ export const SignUp = ({ onBackToLogin }: SignUpProps) => {
     const onSubmit = async (formData: Inputs) => {
         // Prevent multiple submissions
         if (loading) {
-            console.log('Signup already in progress, ignoring duplicate submission');
             return;
         }
 
@@ -48,12 +45,7 @@ export const SignUp = ({ onBackToLogin }: SignUpProps) => {
             email: formData.email,
             password: formData.password
         }
-        console.log('=== SIGNUP DEBUG ===');
-        console.log('Form data:', formData);
-        console.log('Payload being sent:', payload);
-
         try {
-            console.log('Calling custom signup endpoint...');
             const response = await fetch('/api/auth/sign-up/email', {
                 method: 'POST',
                 headers: {
@@ -63,13 +55,10 @@ export const SignUp = ({ onBackToLogin }: SignUpProps) => {
             });
 
             const res = await response.json();
-            console.log('Signup response:', res);
             if (res.error || !res.success) {
                 console.error('Signup error details:', res.error);
                 setFormError(res.error ?? "An unknown error occurred.");
             } else {
-                console.log('Signup successful!');
-                console.log('Response cookies:', response.headers.get('set-cookie'));
 
                 // Show success message and redirect to home page
                 setSuccessMessage('Account created successfully! You are now signed in.');
@@ -80,7 +69,6 @@ export const SignUp = ({ onBackToLogin }: SignUpProps) => {
 
                 // Force a page reload to ensure the session is properly recognized
                 setTimeout(() => {
-                    console.log('Redirecting to home page...');
                     window.location.href = '/';
                 }, 1500); // Redirect after 1.5 seconds
             }

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { SignUp } from "./sign-up";
-import { useRouter } from "next/navigation";
 import { SubmitHandler, useForm } from "react-hook-form";
 import Input from "../input";
 import './style.scss';
@@ -18,7 +17,6 @@ const LoginForm = () => {
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isSignUp, setIsSignUp] = useState(false);
-    const router = useRouter();
     const {
         register,
         handleSubmit,
@@ -29,9 +27,6 @@ const LoginForm = () => {
         setLoading(true);
         setErrorMessage(null);
         try {
-            console.log('=== SIGNIN DEBUG ===');
-            console.log('Signin payload:', { email: formData.email, password: formData.password, rememberMe: formData.rememberMe });
-
             const response = await fetch('/api/auth/sign-in/email', {
                 method: 'POST',
                 headers: {
@@ -46,7 +41,6 @@ const LoginForm = () => {
             });
 
             const res = await response.json();
-            console.log('Signin response:', res);
 
             if (!res.success) {
                 console.error('Signin error:', res.error);
@@ -55,7 +49,6 @@ const LoginForm = () => {
                 return;
             }
 
-            console.log('Signin successful!');
             setLoading(false);
 
             // Trigger auth status change event for header update
@@ -63,7 +56,6 @@ const LoginForm = () => {
             localStorage.setItem('auth-status', 'logged-in');
 
             // Force a page reload to ensure the session is properly recognized
-            console.log('Redirecting to home page...');
             window.location.href = '/';
         } catch (err: unknown) {
             console.error('Signin exception:', err);
