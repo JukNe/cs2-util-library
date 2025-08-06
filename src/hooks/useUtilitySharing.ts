@@ -52,7 +52,7 @@ export const useUtilitySharing = (): UseUtilitySharingReturn => {
             }
 
             return parsedData as SharedUtilityData;
-        } catch (error) {
+        } catch {
             return null;
         }
     }, []);

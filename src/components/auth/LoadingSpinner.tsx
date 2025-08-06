@@ -6,7 +6,6 @@ export const LoadingSpinner = () => {
             alignItems: 'center',
             height: '100vh',
             fontSize: '1.2rem',
-            color: '#666',
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             color: 'white'
         }}>
