@@ -149,7 +149,7 @@ export const useTutorial = () => {
                 break;
             case 'utility-added':
                 // Listen for new utility elements being added
-                let initialUtilityCount = document.querySelectorAll('.utility-lp-button').length;
+                const initialUtilityCount = document.querySelectorAll('.utility-lp-button').length;
                 let utilityDetected = false;
                 const checkUtilityAdded = () => {
                     const currentUtilityCount = document.querySelectorAll('.utility-lp-button').length;
@@ -166,7 +166,7 @@ export const useTutorial = () => {
                 break;
             case 'throwing-point-added':
                 // Listen for new throwing point elements being added
-                let initialTPCount = document.querySelectorAll('.utility-tp-button').length;
+                const initialTPCount = document.querySelectorAll('.utility-tp-button').length;
                 let tpDetected = false;
                 const checkThrowingPointAdded = () => {
                     const currentTPCount = document.querySelectorAll('.utility-tp-button').length;
