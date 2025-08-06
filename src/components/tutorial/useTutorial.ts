@@ -8,7 +8,7 @@ export interface TutorialStep {
     position?: 'top' | 'bottom' | 'left' | 'right' | 'center';
     action?: () => void; // Optional action to perform when step is shown
     autoAdvance?: {
-        event: 'click' | 'change' | 'dropdown-open' | 'utility-added' | 'throwing-point-added';
+        event: 'click' | 'change' | 'dropdown-open' | 'utility-added' | 'throwing-point-added' | 'utility-selected';
         selector?: string; // CSS selector to watch for the event
         condition?: () => boolean; // Custom condition function
     };
@@ -100,46 +100,102 @@ export const useTutorial = () => {
 
         const { event, selector, condition } = currentStep.autoAdvance;
         let cleanup: (() => void) | undefined;
+        let hasAdvanced = false;
 
         const handleAutoAdvance = () => {
-            // Check if condition is met (if provided)
-            if (condition && !condition()) return;
+            // Prevent multiple advances
+            if (hasAdvanced) return;
+            hasAdvanced = true;
 
+            // Check if condition is met (if provided)
+            if (condition) {
+                // Add a small delay to allow DOM updates before checking condition
+                setTimeout(() => {
+                    if (!condition()) {
+                        hasAdvanced = false;
+                        return;
+                    }
+                    // Small delay to ensure the action is completed
+                    setTimeout(() => {
+                        nextStep();
+                    }, 200);
+                }, 100);
+                return;
+            }
             // Small delay to ensure the action is completed
             setTimeout(() => {
                 nextStep();
-            }, 500);
+            }, 300);
+        };
+
+        // Wait for elements to be available
+        const waitForElement = (selector: string, timeout = 5000): Promise<Element | null> => {
+            return new Promise((resolve) => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    resolve(element);
+                    return;
+                }
+
+                const observer = new MutationObserver(() => {
+                    const element = document.querySelector(selector);
+                    if (element) {
+                        observer.disconnect();
+                        resolve(element);
+                    }
+                });
+
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+
+                // Timeout fallback
+                setTimeout(() => {
+                    observer.disconnect();
+                    resolve(null);
+                }, timeout);
+            });
         };
 
         switch (event) {
             case 'click':
                 if (selector) {
-                    const element = document.querySelector(selector);
-                    if (element) {
-                        element.addEventListener('click', handleAutoAdvance, { once: true });
-                        cleanup = () => element.removeEventListener('click', handleAutoAdvance);
-                    }
+                    waitForElement(selector).then((element) => {
+                        if (element && !hasAdvanced) {
+                            element.addEventListener('click', handleAutoAdvance, { once: true });
+                            cleanup = () => element.removeEventListener('click', handleAutoAdvance);
+                        }
+                    });
                 }
                 break;
             case 'change':
                 if (selector) {
-                    const element = document.querySelector(selector);
-                    if (element) {
-                        element.addEventListener('change', handleAutoAdvance, { once: true });
-                        cleanup = () => element.removeEventListener('change', handleAutoAdvance);
-                    }
+                    waitForElement(selector).then((element) => {
+                        if (element && !hasAdvanced) {
+                            element.addEventListener('change', handleAutoAdvance, { once: true });
+                            cleanup = () => element.removeEventListener('change', handleAutoAdvance);
+                        }
+                    });
                 }
                 break;
             case 'dropdown-open':
-                // Listen for dropdown state changes
+                // Listen for dropdown state changes with better detection
                 let dropdownDetected = false;
+                let attempts = 0;
+                const maxAttempts = 100; // 10 seconds max
+
                 const checkDropdown = () => {
+                    attempts++;
                     const dropdown = document.querySelector('.utility-dropdown-menu.show');
                     if (dropdown && !dropdownDetected) {
                         dropdownDetected = true;
                         handleAutoAdvance();
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(interval);
                     }
                 };
+
                 // Check periodically for dropdown opening
                 const interval = setInterval(checkDropdown, 100);
                 cleanup = () => {
@@ -148,16 +204,24 @@ export const useTutorial = () => {
                 };
                 break;
             case 'utility-added':
-                // Listen for new utility elements being added
-                const initialUtilityCount = document.querySelectorAll('.utility-lp-button').length;
+                // Listen for new utility elements being added with better detection
                 let utilityDetected = false;
+                let utilityAttempts = 0;
+                const maxUtilityAttempts = 150; // 15 seconds max
+
                 const checkUtilityAdded = () => {
+                    utilityAttempts++;
                     const currentUtilityCount = document.querySelectorAll('.utility-lp-button').length;
-                    if (currentUtilityCount > initialUtilityCount && !utilityDetected) {
+
+                    // Check if we have at least one utility button
+                    if (currentUtilityCount > 0 && !utilityDetected) {
                         utilityDetected = true;
                         handleAutoAdvance();
+                    } else if (utilityAttempts >= maxUtilityAttempts) {
+                        clearInterval(utilityInterval);
                     }
                 };
+
                 const utilityInterval = setInterval(checkUtilityAdded, 100);
                 cleanup = () => {
                     clearInterval(utilityInterval);
@@ -165,20 +229,53 @@ export const useTutorial = () => {
                 };
                 break;
             case 'throwing-point-added':
-                // Listen for new throwing point elements being added
-                const initialTPCount = document.querySelectorAll('.utility-tp-button').length;
+                // Listen for new throwing point elements being added with better detection
                 let tpDetected = false;
+                let tpAttempts = 0;
+                const maxTPAttempts = 150; // 15 seconds max
+
                 const checkThrowingPointAdded = () => {
+                    tpAttempts++;
                     const currentTPCount = document.querySelectorAll('.utility-tp-button').length;
-                    if (currentTPCount > initialTPCount && !tpDetected) {
+
+                    // Check if we have at least one throwing point button
+                    if (currentTPCount > 0 && !tpDetected) {
                         tpDetected = true;
                         handleAutoAdvance();
+                    } else if (tpAttempts >= maxTPAttempts) {
+                        clearInterval(tpInterval);
                     }
                 };
+
                 const tpInterval = setInterval(checkThrowingPointAdded, 100);
                 cleanup = () => {
                     clearInterval(tpInterval);
                     tpDetected = false;
+                };
+                break;
+            case 'utility-selected':
+                // Listen for utility selection by checking if dropdown closes after being open
+                let utilitySelectedDetected = false;
+                let utilitySelectedAttempts = 0;
+                const maxUtilitySelectedAttempts = 100; // 10 seconds max
+                
+                const checkUtilitySelected = () => {
+                    utilitySelectedAttempts++;
+                    const dropdown = document.querySelector('.utility-dropdown-menu.show');
+                    
+                    // If dropdown was open but is now closed, a utility was selected
+                    if (!dropdown && !utilitySelectedDetected) {
+                        utilitySelectedDetected = true;
+                        handleAutoAdvance();
+                    } else if (utilitySelectedAttempts >= maxUtilitySelectedAttempts) {
+                        clearInterval(utilitySelectedInterval);
+                    }
+                };
+                
+                const utilitySelectedInterval = setInterval(checkUtilitySelected, 100);
+                cleanup = () => {
+                    clearInterval(utilitySelectedInterval);
+                    utilitySelectedDetected = false;
                 };
                 break;
         }

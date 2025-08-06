@@ -4,7 +4,7 @@ export const getUtilityTutorialSteps = (): TutorialStep[] => [
     {
         id: 'welcome',
         title: 'Welcome to CS2 Util Library!',
-        content: 'Let&apos;s learn how to add your first utility. This tutorial will guide you through the process step by step.',
+        content: 'Let\'s learn how to add your first utility. This tutorial will guide you through the process step by step.',
         position: 'center'
     },
     {
@@ -24,8 +24,7 @@ export const getUtilityTutorialSteps = (): TutorialStep[] => [
         target: '.utility-dropdown-menu',
         position: 'bottom',
         autoAdvance: {
-            event: 'click',
-            selector: '.utility-button'
+            event: 'utility-selected'
         }
     },
     {
@@ -35,20 +34,26 @@ export const getUtilityTutorialSteps = (): TutorialStep[] => [
         target: '.map-image-container',
         position: 'left',
         autoAdvance: {
-            event: 'utility-added'
+            event: 'utility-added',
+            condition: () => {
+                // Check if we have at least one utility button and no utility is selected
+                const utilityCount = document.querySelectorAll('.utility-lp-button').length;
+                const noUtilitySelected = !document.querySelector('.add-nade-dropdown .main-add-button img');
+                return utilityCount > 0 && noUtilitySelected;
+            }
         }
     },
     {
         id: 'landing-point',
         title: 'Landing Point Created!',
-        content: 'Great! You&apos;ve created a landing point. This shows where your utility will land. You can now add throwing points to show where to throw from.',
+        content: 'Great! You\'ve created a landing point. This shows where your utility will land. You can now add throwing points to show where to throw from.',
         target: '.utility-lp-button',
         position: 'top'
     },
     {
         id: 'add-throwing-point',
         title: 'Add Throwing Points',
-        content: 'Click on a landing point to select it, then click &quot;Add Throwing Point&quot; to show where to throw from. You can add multiple throwing points for different positions.',
+        content: 'Click on a landing point to select it, then click "Add Throwing Point" to show where to throw from. You can add multiple throwing points for different positions.',
         target: '.add-throwing-point-button',
         position: 'right',
         autoAdvance: {
@@ -63,7 +68,12 @@ export const getUtilityTutorialSteps = (): TutorialStep[] => [
         target: '.map-image-container',
         position: 'left',
         autoAdvance: {
-            event: 'throwing-point-added'
+            event: 'throwing-point-added',
+            condition: () => {
+                // Check if we have at least one throwing point button
+                const tpCount = document.querySelectorAll('.utility-tp-button').length;
+                return tpCount > 0;
+            }
         }
     },
     {
@@ -100,7 +110,7 @@ export const getUtilityTutorialSteps = (): TutorialStep[] => [
     },
     {
         id: 'complete',
-        title: 'You&apos;re All Set!',
+        title: 'You\'re All Set!',
         content: 'Congratulations! You now know how to add utilities to the CS2 Util Library. Start creating your own lineups and share them with your team!',
         position: 'center'
     }

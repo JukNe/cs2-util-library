@@ -67,10 +67,10 @@ const MapViewerInner = (props: MapViewerProps) => {
     // Initialize tutorial for first-time users
     useEffect(() => {
         if (isClient && !tutorial.hasSeenTutorial) {
-            // Small delay to ensure UI is fully loaded
+            // Longer delay to ensure UI is fully loaded and all elements are rendered
             const timer = setTimeout(() => {
                 tutorial.startTutorial(getUtilityTutorialSteps());
-            }, 1000);
+            }, 2000);
 
             return () => clearTimeout(timer);
         }
@@ -343,10 +343,13 @@ const MapViewerInner = (props: MapViewerProps) => {
                     setUtility((previous) => {
                         return previous.map(item => {
                             if (item === selectedLP) {
-                                return {
+                                const updatedLP = {
                                     ...item,
                                     throwingPoints: [...item.throwingPoints, result.data]
                                 };
+                                // Update the selectedLP reference to the updated landing point
+                                setSelectedLP(updatedLP);
+                                return updatedLP;
                             }
                             return item;
                         });
@@ -366,6 +369,10 @@ const MapViewerInner = (props: MapViewerProps) => {
         } finally {
             setIsAddingThrowingPointLoading(false);
             setIsAddingThrowingPoint(false);
+            // Ensure the landing point modal stays open after adding a throwing point
+            if (selectedLP && !isLPModalOpen) {
+                setIsLPModalOpen(true);
+            }
         }
     }
 
@@ -1687,20 +1694,51 @@ const MapViewerInner = (props: MapViewerProps) => {
                                                 </button>
                                             </>
                                         )}
-                                        {isSelected && item.throwingPoints.map((tp) => (
-                                            <button
-                                                key={tp.id || `${tp.position.X}-${tp.position.Y}`}
-                                                className={'utility-tp-button'}
-                                                onClick={(e) => handleTPClick(tp, e)}
-                                                onMouseEnter={(e) => handleTPHover(tp, e)}
-                                                onMouseLeave={handleTPLeave}
-                                                style={{
-                                                    left: `${tp.position.X}%`,
-                                                    top: `${tp.position.Y}%`,
-                                                    transform: `translate(-50%, -50%) scale(${1 / zoom})`
-                                                }}
-                                            />
-                                        ))}
+                                        {isSelected && (
+                                            <>
+                                                {/* Dashed lines connecting landing point to throwing points */}
+                                                <svg
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: 0,
+                                                        left: 0,
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        pointerEvents: 'none',
+                                                        zIndex: 5
+                                                    }}
+                                                >
+                                                    {item.throwingPoints.map((tp) => (
+                                                        <line
+                                                            key={`line-${tp.id || `${tp.position.X}-${tp.position.Y}`}`}
+                                                            x1={`${item.position.X}%`}
+                                                            y1={`${item.position.Y}%`}
+                                                            x2={`${tp.position.X}%`}
+                                                            y2={`${tp.position.Y}%`}
+                                                            stroke="#4CAF50"
+                                                            strokeWidth="2"
+                                                            strokeDasharray="5,5"
+                                                            opacity="0.8"
+                                                        />
+                                                    ))}
+                                                </svg>
+                                                {/* Throwing point buttons */}
+                                                {item.throwingPoints.map((tp) => (
+                                                    <button
+                                                        key={tp.id || `${tp.position.X}-${tp.position.Y}`}
+                                                        className={'utility-tp-button'}
+                                                        onClick={(e) => handleTPClick(tp, e)}
+                                                        onMouseEnter={(e) => handleTPHover(tp, e)}
+                                                        onMouseLeave={handleTPLeave}
+                                                        style={{
+                                                            left: `${tp.position.X}%`,
+                                                            top: `${tp.position.Y}%`,
+                                                            transform: `translate(-50%, -50%) scale(${1 / zoom})`
+                                                        }}
+                                                    />
+                                                ))}
+                                            </>
+                                        )}
                                     </div>)
                             })}
                     </div>
