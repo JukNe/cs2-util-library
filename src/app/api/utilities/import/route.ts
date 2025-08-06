@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateSession } from '@/lib/session';
 import prisma from '@/lib/prisma';
-import { TUtilityLandingPoint } from '@/types/utilities';
+import { TUtilityLandingPoint, TUtilityThrowingPoint } from '@/types/utilities';
 
 export async function POST(request: NextRequest) {
     try {
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
                     X: newUtility.landingPointX,
                     Y: newUtility.landingPointY
                 },
-                throwingPoints: utility.throwingPoints.map(tp => ({
+                throwingPoints: utility.throwingPoints.map((tp: TUtilityThrowingPoint) => ({
                     id: tp.id,
                     position: tp.position,
                     title: tp.title,
