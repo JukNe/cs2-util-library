@@ -60,18 +60,7 @@ const MapViewerInner = (props: MapViewerProps) => {
     const { utilityFilter } = useContext(UtilityFilterContext)
     const utilityViewerRef = useRef<UtilityViewerRef>(null)
 
-    // Function to calculate sidebar width based on screen size and collapse state
-    const getSidebarWidth = () => {
-        if (!isClient) return 240; // Default for SSR
 
-        if (window.innerWidth <= 480) {
-            return isSidebarCollapsed ? 232 : 180; // 40 + 192 (12em)
-        } else if (window.innerWidth <= 768) {
-            return isSidebarCollapsed ? 242 : 200; // 50 + 192 (12em)
-        } else {
-            return isSidebarCollapsed ? 252 : 240; // 60 + 192 (12em)
-        }
-    };
 
     // Helper function to map utility types to icon file names
     const getUtilityIconSrc = (utilityType: string) => {
@@ -151,7 +140,7 @@ const MapViewerInner = (props: MapViewerProps) => {
     useEffect(() => {
         console.log('MapViewer: Initial load for map:', mapName);
         refreshUtilities();
-    }, [refreshUtilities]);
+    }, [refreshUtilities, mapName]);
 
     // Debug: Log utility data changes
     useEffect(() => {

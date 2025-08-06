@@ -28,7 +28,7 @@ export const EmailVerificationBanner = ({
     try {
       await onResendVerification();
       setMessage('Verification email sent successfully!');
-    } catch (error) {
+    } catch {
       setMessage('Failed to send verification email. Please try again.');
     } finally {
       setIsResending(false);

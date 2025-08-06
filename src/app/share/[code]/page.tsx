@@ -39,8 +39,8 @@ export default function SharePage() {
                     const decodedData = atob(shareCode);
                     const parsedData = JSON.parse(decodedData);
                     setSharedData(parsedData);
-                } catch (error: unknown) {
-                    console.error('Failed to parse share code:', error);
+                } catch {
+                    console.error('Failed to parse share code');
                     setIsValidCode(false);
                 }
             }
@@ -59,8 +59,8 @@ export default function SharePage() {
             setTimeout(() => {
                 router.push(`/${sharedData?.mapName}`);
             }, 2000);
-        } catch (error: unknown) {
-            console.error('Failed to import utilities:', error);
+        } catch {
+            console.error('Failed to import utilities');
         }
     };
 
@@ -68,8 +68,8 @@ export default function SharePage() {
         try {
             await navigator.clipboard.writeText(window.location.href);
             // You could add a toast notification here
-        } catch (error: unknown) {
-            console.error('Failed to copy link:', error);
+        } catch {
+            console.error('Failed to copy link');
         }
     };
 

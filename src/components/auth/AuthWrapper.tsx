@@ -39,8 +39,8 @@ export const AuthWrapper = ({ children }: AuthWrapperProps) => {
             } else {
                 setSession(null);
             }
-        } catch (error) {
-            console.error('Error checking session:', error);
+        } catch {
+            console.error('Error checking session');
             setSession(null);
         } finally {
             setLoading(false);

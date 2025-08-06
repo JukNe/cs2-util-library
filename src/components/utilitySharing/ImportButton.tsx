@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useUtilitySharing } from '@/hooks/useUtilitySharing';
+import { TUtilityLandingPoint } from '@/types/utilities';
 import { BsDownload, BsCheck, BsX } from 'react-icons/bs';
 import './style.scss';
 
@@ -16,7 +17,13 @@ export const ImportButton = ({ onImportSuccess, className = '' }: ImportButtonPr
     const [showModal, setShowModal] = useState(false);
     const [shareCode, setShareCode] = useState('');
     const [isValidCode, setIsValidCode] = useState(false);
-    const [importedData, setImportedData] = useState<any>(null);
+    const [importedData, setImportedData] = useState<{
+        mapName: string;
+        utilities: TUtilityLandingPoint[];
+        sharedBy: string;
+        sharedAt: string;
+        description?: string;
+    } | null>(null);
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {

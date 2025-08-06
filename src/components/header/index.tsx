@@ -2,7 +2,7 @@
 
 import './style.scss';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FaCheckCircle, FaEnvelope } from 'react-icons/fa';
 
 interface User {
@@ -40,8 +40,8 @@ const Header = ({ session }: HeaderProps) => {
             } else {
                 alert(data.error || 'Failed to send verification email');
             }
-        } catch (error) {
-            console.error('Resend verification error:', error);
+        } catch {
+            console.error('Resend verification error');
             alert('Failed to send verification email. Please try again.');
         } finally {
             setResending(false);
@@ -61,8 +61,8 @@ const Header = ({ session }: HeaderProps) => {
                 localStorage.setItem('auth-status', 'logged-out');
                 router.push('/login');
             }
-        } catch (error) {
-            console.error('Logout error:', error);
+        } catch {
+            console.error('Logout error');
         }
     };
 

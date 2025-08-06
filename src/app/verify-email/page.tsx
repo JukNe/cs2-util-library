@@ -45,7 +45,7 @@ export default function VerifyEmail() {
         }
         setMessage(data.error);
       }
-    } catch (error: unknown) {
+    } catch {
       setVerificationStatus('error');
       setMessage('An unexpected error occurred. Please try again.');
     }
@@ -88,7 +88,7 @@ export default function VerifyEmail() {
       } else {
         setMessage(data.error);
       }
-    } catch (error: unknown) {
+    } catch {
       setMessage('Failed to resend verification email. Please try again.');
     } finally {
       setIsResending(false);

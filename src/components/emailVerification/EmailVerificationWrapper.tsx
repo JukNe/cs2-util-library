@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect } from 'react';
 import { EmailVerificationBanner } from './EmailVerificationBanner';
 import { useEmailVerification } from '@/hooks/useEmailVerification';
 
@@ -17,7 +16,7 @@ interface EmailVerificationWrapperProps {
 }
 
 export const EmailVerificationWrapper = ({ session }: EmailVerificationWrapperProps) => {
-    const { resendVerification, isResending, error, success } = useEmailVerification();
+    const { resendVerification } = useEmailVerification();
 
     const handleResendVerification = async () => {
         if (session?.user?.email) {
