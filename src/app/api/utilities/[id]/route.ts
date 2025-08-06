@@ -87,33 +87,14 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
         // Check if utility exists
         const utility = await prisma.utility.findUnique({
-            where: { id: utilityId },
-            include: {
-                throwingPoints: {
-                    include: {
-                        media: true
-                    }
-                }
-            }
+            where: { id: utilityId }
         });
 
         if (!utility) {
             return NextResponse.json({ success: false, error: 'Utility not found' }, { status: 404 });
         }
 
-        // Delete all media associated with throwing points first
-        for (const throwingPoint of utility.throwingPoints) {
-            await prisma.media.deleteMany({
-                where: { throwingPointId: throwingPoint.id }
-            });
-        }
-
-        // Delete all throwing points
-        await prisma.throwingPoint.deleteMany({
-            where: { utilityId: utilityId }
-        });
-
-        // Delete the utility
+        // Delete the utility (this will cascade delete throwing points and set media foreign keys to null)
         await prisma.utility.delete({
             where: { id: utilityId }
         });

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Media } from '@/types/media';
 import MediaDisplay from '@/components/mediaDisplay';
+import UploadModal from '@/components/mediaUploader/uploadModal';
 
 // Simple cache for media data
 const mediaCache = {
@@ -15,6 +16,7 @@ export default function MediaPage() {
     const [media, setMedia] = useState<Media[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
     const fetchUserMedia = useCallback(async (forceRefresh = false) => {
         try {
@@ -108,35 +110,73 @@ export default function MediaPage() {
                 <div>
                     <h1>Media Library</h1>
                     <p style={{ color: 'rgba(255, 255, 255, 0.7)', margin: 0 }}>
-                        All media uploaded to your utilities and throwing points
+                        Upload and manage your media files
                     </p>
                 </div>
-                <button
-                    onClick={() => fetchUserMedia(true)}
-                    style={{
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                        color: 'white',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '0.9rem'
-                    }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                    }}
-                >
-                    Refresh
-                </button>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button
+                        onClick={() => setIsUploadModalOpen(true)}
+                        style={{
+                            background: 'rgba(76, 175, 80, 0.2)',
+                            border: '1px solid rgba(76, 175, 80, 0.3)',
+                            color: '#4CAF50',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                            fontWeight: '500'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(76, 175, 80, 0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(76, 175, 80, 0.2)';
+                        }}
+                    >
+                        Upload Media
+                    </button>
+                    <button
+                        onClick={() => fetchUserMedia(true)}
+                        style={{
+                            background: 'rgba(255, 255, 255, 0.1)',
+                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                            color: 'white',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                        }}
+                    >
+                        Refresh
+                    </button>
+                </div>
             </div>
+
+            {/* Media Display Section */}
             <MediaDisplay
                 media={media}
                 onMediaDeleted={(mediaId) => {
                     // Remove from local state
                     setMedia(prev => prev.filter(item => item.id !== mediaId));
+                    // Clear cache to force fresh data on next load
+                    mediaCache.data = null;
+                    mediaCache.timestamp = 0;
+                }}
+            />
+
+            {/* Upload Modal */}
+            <UploadModal
+                isOpen={isUploadModalOpen}
+                onClose={() => setIsUploadModalOpen(false)}
+                onUploadComplete={(newMedia) => {
+                    // Add new media to the list
+                    setMedia(prev => [newMedia, ...prev]);
                     // Clear cache to force fresh data on next load
                     mediaCache.data = null;
                     mediaCache.timestamp = 0;

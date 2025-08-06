@@ -28,6 +28,7 @@ model User {
   accounts        Account[]
   utilities       Utility[] // User can create utilities
   sharedUtilities UtilityShare[] // User can share utilities
+  media           Media[] // User can own media
 
   @@map("user")
 }
@@ -131,10 +132,12 @@ model Media {
   description     String? // Optional description
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+  userId          String? // User who owns this media
+  user            User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
   utilityId       String? // Optional: media can belong to a utility
-  utility         Utility?       @relation(fields: [utilityId], references: [id], onDelete: Cascade)
+  utility         Utility?       @relation(fields: [utilityId], references: [id], onDelete: SetNull)
   throwingPointId String? // Optional: media can belong to a throwing point
-  throwingPoint   ThrowingPoint? @relation(fields: [throwingPointId], references: [id], onDelete: Cascade)
+  throwingPoint   ThrowingPoint? @relation(fields: [throwingPointId], references: [id], onDelete: SetNull)
 
   @@map("media")
 }

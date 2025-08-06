@@ -84,6 +84,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // If neither utilityId nor throwingPointId is provided, this creates unattached media
+    // No additional validation needed - the media will be owned by the user but not attached to anything
+
     // Generate a unique filename
     const timestamp = Date.now();
     const extension = file.name.split('.').pop();
@@ -95,6 +98,7 @@ export async function POST(request: NextRequest) {
       type,
       title,
       description,
+      userId: sessionValidation.userId!,
       utilityId: utilityId || undefined,
       throwingPointId: throwingPointId || undefined,
     });

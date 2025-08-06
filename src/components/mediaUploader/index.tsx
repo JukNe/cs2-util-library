@@ -17,6 +17,7 @@ interface MediaUploaderProps {
     onUploadComplete?: (media: Media) => void;
     maxFileSize?: number;
     allowedTypes?: ('image' | 'video')[];
+    variant?: 'default' | 'standalone';
 }
 
 // Utility functions
@@ -62,12 +63,14 @@ const MediaUploader = ({
     throwingPointId,
     onUploadComplete,
     maxFileSize = MAX_FILE_SIZE,
-    allowedTypes = ['image', 'video']
+    allowedTypes = ['image', 'video'],
+    variant = 'default'
 }: MediaUploaderProps) => {
     const inputFileRef = useRef<HTMLInputElement>(null);
     const dropZoneRef = useRef<HTMLDivElement>(null);
 
     const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadedMedia, setUploadedMedia] = useState<Media | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -135,6 +138,7 @@ const MediaUploader = ({
 
         setUploading(true);
         setError(null);
+        setUploadProgress(0);
 
         try {
             const formData = new FormData();
@@ -154,7 +158,7 @@ const MediaUploader = ({
                 formData.append('throwingPointId', throwingPointId);
             }
 
-            const response = await fetch('/api/media/upload-simple', {
+            const response = await fetch('/api/media/upload', {
                 method: 'POST',
                 body: formData,
             });
@@ -165,6 +169,7 @@ const MediaUploader = ({
             }
 
             const result = await response.json();
+            setUploadProgress(100);
             setUploadedMedia(result.media);
 
             if (onUploadComplete) {
@@ -181,6 +186,7 @@ const MediaUploader = ({
             setError(error instanceof Error ? error.message : 'Upload failed. Please try again.');
         } finally {
             setUploading(false);
+            setUploadProgress(0);
         }
     }, [selectedFile, utilityId, throwingPointId, onUploadComplete]);
 
@@ -214,10 +220,10 @@ const MediaUploader = ({
     }, [selectedFile, handleUpload, handleClickUpload]);
 
     return (
-        <div className="media-uploader" role="region" aria-label="Media uploader">
+        <div className={`media-uploader ${variant === 'standalone' ? 'standalone-media-uploader' : ''}`} role="region" aria-label="Media uploader">
             <div
                 ref={dropZoneRef}
-                className={`drop-zone ${isDragOver ? 'drag-over' : ''} ${selectedFile ? 'file-selected' : ''}`}
+                className={`${variant === 'standalone' ? 'upload-area' : 'drop-zone'} ${isDragOver ? 'drag-over' : ''} ${selectedFile ? 'file-selected' : ''} ${uploading ? 'uploading' : ''}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -240,40 +246,80 @@ const MediaUploader = ({
                 />
 
                 {!selectedFile ? (
-                    <div className="upload-prompt">
+                    <div className={variant === 'standalone' ? 'upload-content' : 'upload-prompt'}>
                         <BsCloudUpload size="3em" className="upload-icon" aria-hidden="true" />
-                        <p className="upload-text">Click or drag files here to upload</p>
-                        <p className="upload-hint">
-                            Supports {allowedTypes.join(' and ')} files up to {formatFileSize(maxFileSize)}
-                        </p>
+                        {variant === 'standalone' ? (
+                            <>
+                                <h3>Upload Media</h3>
+                                <p>Drag and drop files here or click to browse</p>
+                                <div className="file-types">
+                                    <p>Supported formats:</p>
+                                    <div className="type-icons">
+                                        <span className="type-icon">
+                                            <BsFileEarmarkImage size="1.2em" />
+                                            Images (JPG, PNG, WebP, GIF)
+                                        </span>
+                                        <span className="type-icon">
+                                            <BsFileEarmarkPlay size="1.2em" />
+                                            Videos (MP4, WebM, MOV, AVI)
+                                        </span>
+                                    </div>
+                                </div>
+                                <p className="file-size-limit">
+                                    Maximum file size: {formatFileSize(maxFileSize)}
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <p className="upload-text">Click or drag files here to upload</p>
+                                <p className="upload-hint">
+                                    Supports {allowedTypes.join(' and ')} files up to {formatFileSize(maxFileSize)}
+                                </p>
+                            </>
+                        )}
                     </div>
                 ) : (
-                    <div className="file-preview">
-                        {fileIcon}
-                        <p className="file-name" title={selectedFile.name}>{selectedFile.name}</p>
-                        <p className="file-size">{fileSize}</p>
-                        <button
-                            className="upload-button"
-                            onClick={handleUploadClick}
-                            disabled={uploading}
-                            aria-label={uploading ? 'Uploading file...' : 'Upload file'}
-                        >
-                            {uploading ? 'Uploading...' : 'Upload File'}
-                        </button>
-                        <button
-                            className="remove-button"
-                            onClick={handleRemoveFile}
-                            aria-label="Remove selected file"
-                        >
-                            Remove
-                        </button>
-                    </div>
+                    variant === 'standalone' && uploading ? (
+                        <div className="upload-progress">
+                            <div className="progress-bar">
+                                <div
+                                    className="progress-fill"
+                                    style={{ width: `${uploadProgress}%` }}
+                                />
+                            </div>
+                            <p>Uploading... {uploadProgress}%</p>
+                        </div>
+                    ) : (
+                        <div className="file-preview">
+                            {fileIcon}
+                            <p className="file-name" title={selectedFile.name}>{selectedFile.name}</p>
+                            <p className="file-size">{fileSize}</p>
+                            <button
+                                className="upload-button"
+                                onClick={handleUploadClick}
+                                disabled={uploading}
+                                aria-label={uploading ? 'Uploading file...' : 'Upload file'}
+                            >
+                                {uploading ? 'Uploading...' : 'Upload File'}
+                            </button>
+                            <button
+                                className="remove-button"
+                                onClick={handleRemoveFile}
+                                aria-label="Remove selected file"
+                            >
+                                Remove
+                            </button>
+                        </div>
+                    )
                 )}
             </div>
 
             {error && (
                 <div className="upload-error" role="alert" id="upload-error">
-                    <p>❌ {error}</p>
+                    <p>{variant === 'standalone' ? error : `❌ ${error}`}</p>
+                    {variant === 'standalone' && (
+                        <button onClick={() => setError(null)}>Dismiss</button>
+                    )}
                 </div>
             )}
 

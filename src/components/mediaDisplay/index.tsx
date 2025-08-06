@@ -23,7 +23,7 @@ const MediaDisplay = ({ media, onMediaDeleted }: MediaDisplayProps) => {
         if (mediaItem.throwingPoint) {
             return `${mediaItem.throwingPoint.utility.map.displayName} - ${mediaItem.throwingPoint.utility.title} - ${mediaItem.throwingPoint.title}`;
         }
-        return 'Unknown context';
+        return 'Unattached media';
     };
 
     const formatDate = (dateString: string) => {

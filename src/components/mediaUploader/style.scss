@@ -243,3 +243,332 @@
     }
   }
 }
+
+// Standalone Media Uploader Styles
+.standalone-media-uploader {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+
+  .upload-area {
+    border: 3px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.02);
+    min-height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    outline: none;
+
+    &:hover {
+      border-color: rgba(76, 175, 80, 0.6);
+      background: rgba(76, 175, 80, 0.05);
+      transform: translateY(-2px);
+    }
+
+    &:focus {
+      border-color: rgba(33, 150, 243, 0.6);
+      box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+    }
+
+    &.drag-active {
+      border-color: rgba(76, 175, 80, 0.8);
+      background: rgba(76, 175, 80, 0.1);
+      transform: scale(1.02);
+    }
+
+    &.uploading {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+  }
+
+  .upload-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    color: white;
+
+    .upload-icon {
+      color: rgba(255, 255, 255, 0.7);
+      transition: color 0.3s ease;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: white;
+    }
+
+    p {
+      margin: 0;
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .file-types {
+      p {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+      }
+
+      .type-icons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: center;
+
+        .type-icon {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.9rem;
+          color: rgba(255, 255, 255, 0.7);
+        }
+      }
+    }
+
+    .file-size-limit {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.6);
+    }
+  }
+
+  .upload-progress {
+    width: 100%;
+    max-width: 300px;
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4CAF50, #45a049);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+      }
+    }
+
+    p {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.8);
+    }
+  }
+
+  .upload-error {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    border-radius: 8px;
+    text-align: center;
+
+    p {
+      margin: 0 0 0.5rem 0;
+      color: #ff6b6b;
+      font-weight: 500;
+    }
+
+    button {
+      background: rgba(244, 67, 54, 0.2);
+      color: #ff6b6b;
+      border: 1px solid rgba(244, 67, 54, 0.3);
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(244, 67, 54, 0.3);
+      }
+    }
+  }
+}
+
+// Upload Modal Styles
+.upload-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.upload-modal {
+  background: #1a1a1a;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 600px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+
+  .upload-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+
+    h2 {
+      margin: 0;
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .upload-modal-close {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+      }
+
+      &:focus {
+        outline: 2px solid rgba(255, 255, 255, 0.3);
+        outline-offset: 2px;
+      }
+    }
+  }
+
+  .upload-modal-content {
+    padding: 2rem;
+    max-height: 70vh;
+    overflow-y: auto;
+
+    .upload-success-message {
+      text-align: center;
+      color: white;
+      padding: 2rem;
+
+      p {
+        margin: 0.5rem 0;
+        font-size: 1rem;
+
+        &:first-child {
+          font-size: 1.2rem;
+          font-weight: 600;
+          color: #4CAF50;
+        }
+      }
+    }
+  }
+}
+
+// Responsive adjustments for standalone uploader
+@media (max-width: 768px) {
+  .standalone-media-uploader {
+    padding: 1.5rem;
+
+    .upload-area {
+      padding: 2rem 1.5rem;
+      min-height: 200px;
+    }
+
+    .upload-content {
+      h3 {
+        font-size: 1.3rem;
+      }
+
+      p {
+        font-size: 0.9rem;
+      }
+    }
+  }
+
+  .upload-modal {
+    width: 95vw;
+    margin: 1rem;
+
+    .upload-modal-header {
+      padding: 1rem 1.5rem;
+
+      h2 {
+        font-size: 1.3rem;
+      }
+    }
+
+    .upload-modal-content {
+      padding: 1.5rem;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .standalone-media-uploader {
+    padding: 1rem;
+
+    .upload-area {
+      padding: 1.5rem 1rem;
+      min-height: 180px;
+    }
+
+    .upload-content {
+      h3 {
+        font-size: 1.2rem;
+      }
+
+      p {
+        font-size: 0.85rem;
+      }
+
+      .file-types {
+        .type-icons {
+          .type-icon {
+            font-size: 0.8rem;
+          }
+        }
+      }
+    }
+  }
+
+  .upload-modal {
+    .upload-modal-header {
+      padding: 0.75rem 1rem;
+
+      h2 {
+        font-size: 1.2rem;
+      }
+    }
+
+    .upload-modal-content {
+      padding: 1rem;
+    }
+  }
+}

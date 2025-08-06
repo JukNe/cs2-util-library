@@ -8,6 +8,7 @@ export interface UploadBlobOptions {
   type: 'image' | 'video' | 'gif';
   title?: string;
   description?: string;
+  userId?: string;
   utilityId?: string;
   throwingPointId?: string;
 }
@@ -50,6 +51,7 @@ export async function uploadBlobToDatabase(options: UploadBlobOptions): Promise<
         type: options.type,
         title: options.title,
         description: options.description,
+        userId: options.userId,
         utilityId: options.utilityId,
         throwingPointId: options.throwingPointId,
       },
@@ -189,6 +191,20 @@ export async function getUserMedia(userId: string): Promise<Media[]> {
           }
         }
       }
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+}
+
+/**
+ * Get all unattached media for a user (media that is not linked to any utility or throwing point)
+ */
+export async function getUserUnattachedMedia(userId: string): Promise<Media[]> {
+  return await prisma.media.findMany({
+    where: {
+      userId: userId,
+      utilityId: null,
+      throwingPointId: null
     },
     orderBy: { createdAt: 'desc' },
   });

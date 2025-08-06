@@ -467,7 +467,7 @@ const MapViewerInner = (props: MapViewerProps) => {
 
         // Show confirmation dialog
         const confirmed = window.confirm(
-            `Are you sure you want to delete this ${selectedLP.utilityType} landing point?\n\nThis will also delete all ${selectedLP.throwingPoints.length} throwing point(s) and their associated media.`
+            `Are you sure you want to delete this ${selectedLP.utilityType} landing point?\n\nThis will also delete all ${selectedLP.throwingPoints.length} throwing point(s). Associated media will be unattached and can be reused.`
         );
 
         if (!confirmed) {
@@ -512,7 +512,7 @@ const MapViewerInner = (props: MapViewerProps) => {
 
         // Show confirmation dialog
         const confirmed = window.confirm(
-            `Are you sure you want to delete this throwing point?\n\nTitle: ${tp.title}\nThis will also delete all associated media.`
+            `Are you sure you want to delete this throwing point?\n\nTitle: ${tp.title}\nAssociated media will be unattached and can be reused.`
         );
 
         if (!confirmed) {

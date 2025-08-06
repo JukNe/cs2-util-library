@@ -18,11 +18,11 @@ A comprehensive web application for Counter-Strike 2 players to create, manage, 
 - **4 Utility Types**: Smoke, Flash, Molotov, HE Grenade
 - **Team-Specific**: Separate utilities for Terrorist (T) and Counter-Terrorist (CT) sides
 - **Multiple Throwing Points**: Each utility can have multiple throwing positions
-- **Rich Descriptions**: Add detailed descriptions for each utility and throwing point
+- **Descriptions**: Add descriptions for each utility and throwing point
 
 ### 📸 **Media Integration**
 - **Image & Video Support**: Upload screenshots, videos, and GIFs for utilities
-- **Visual Learning**: Attach media to both utilities and throwing points
+- **Visual Learning**: Attach media to both utility landing and throwing points
 - **Cloud Storage**: Secure media storage with Vercel Blob
 
 ### 🔗 **Sharing System**
@@ -37,18 +37,11 @@ A comprehensive web application for Counter-Strike 2 players to create, manage, 
 - **Password Security**: Bcrypt password hashing
 - **Email Verification**: Required email verification for full access
 
-### 🎨 **Modern UI/UX**
-- **Responsive Design**: Works on desktop, tablet, and mobile devices
-- **Dark Theme**: Eye-friendly dark interface optimized for gaming
-- **Interactive Elements**: Hover effects, animations, and smooth transitions
-- **Real-time Feedback**: Loading states, success messages, and error handling
-
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Node.js 18+ 
-- PostgreSQL database
-- Yarn package manager
+- Prisma PostgreSQL database
 
 ### Installation
 
@@ -106,8 +99,6 @@ A comprehensive web application for Counter-Strike 2 players to create, manage, 
 - Creating throwing points
 - Using filters and sharing utilities
 
-You can restart the tutorial anytime by clicking the "Help" button in the map controls.
-
 ### Creating Utilities
 
 1. **Select a Map**: Choose from the 10 available competitive maps
@@ -118,6 +109,37 @@ You can restart the tutorial anytime by clicking the "Help" button in the map co
    - Add title and description
 4. **Add Throwing Points**: Click to add multiple throwing positions
 5. **Upload Media**: Attach screenshots or videos for visual reference
+
+### Managing Media
+
+**Uploading New Media**:
+- Use the upload section in the media carousel for utilities/throwing points
+- Visit the dedicated `/media` page and click "Upload Media" to open the upload modal
+- Drag and drop or click to select files
+- Supports images (JPG, PNG, WebP, GIF) and videos (MP4, WebM, MOV, AVI)
+- Maximum file size: 50MB
+
+**Attaching Existing Media**:
+- Click the "Attach Existing Media" button in the media carousel
+- Browse your unattached media library
+- Select and attach media to utilities or throwing points
+- Media can be reused across different utilities and throwing points
+
+**Media Preservation**:
+- When utilities or throwing points are deleted, associated media becomes unattached
+- Unattached media is preserved and can be reused
+- Media is only deleted when explicitly removed by the user
+
+**Media Library Page**:
+- Access all your media at `/media`
+- Click "Upload Media" button to open upload modal
+- View, manage, and delete existing media
+- Full-screen preview with navigation
+
+**Media Organization**:
+- Media is automatically organized by utility and throwing point
+- Edit descriptions for better organization
+- Delete media when no longer needed
 
 ### Sharing Utilities
 

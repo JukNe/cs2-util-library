@@ -1,7 +1,8 @@
 import { useState, useEffect, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { Media } from '@/types/media';
-import { BsChevronLeft, BsChevronRight, BsTrash, BsFullscreen, BsX } from 'react-icons/bs';
+import { BsChevronLeft, BsChevronRight, BsTrash, BsFullscreen, BsX, BsLink } from 'react-icons/bs';
 import MediaUploader from '../mediaUploader';
+import MediaAttacher from '../mediaAttacher';
 import Image from 'next/image';
 import './style.scss';
 
@@ -35,6 +36,7 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
     const [currentIndex, setCurrentIndex] = useState(0);
     const [deleting, setDeleting] = useState<string | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isAttacherVisible, setIsAttacherVisible] = useState(false);
 
     const fetchMedia = useCallback(async () => {
         try {
@@ -226,11 +228,23 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
                             <h4>📷 Media Gallery</h4>
                             <p>No media uploaded yet. Upload your first image or video!</p>
                         </div>
-                        <MediaUploader
-                            utilityId={utilityId}
-                            throwingPointId={throwingPointId}
-                            onUploadComplete={handleMediaUploaded}
-                        />
+                        <div className="upload-actions">
+                            <MediaUploader
+                                utilityId={utilityId}
+                                throwingPointId={throwingPointId}
+                                onUploadComplete={handleMediaUploaded}
+                            />
+                            <div className="attach-media-section">
+                                <p>Or attach existing media:</p>
+                                <button
+                                    className="attach-existing-button"
+                                    onClick={() => setIsAttacherVisible(true)}
+                                >
+                                    <BsLink size="1em" />
+                                    Attach Existing Media
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 ) : (
                     // Show carousel with media
@@ -268,6 +282,15 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
                                 title="Toggle fullscreen"
                             >
                                 <BsFullscreen size="1em" />
+                            </button>
+
+                            {/* Attach Media button */}
+                            <button
+                                className="carousel-attach-button"
+                                onClick={() => setIsAttacherVisible(true)}
+                                title="Attach existing media"
+                            >
+                                <BsLink size="1em" />
                             </button>
 
                             {/* Delete button */}
@@ -318,6 +341,18 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
                         />
                     </div>
                 )}
+
+                {/* Media Attacher Modal */}
+                <MediaAttacher
+                    utilityId={utilityId}
+                    throwingPointId={throwingPointId}
+                    isVisible={isAttacherVisible}
+                    onClose={() => setIsAttacherVisible(false)}
+                    onMediaAttached={() => {
+                        fetchMedia();
+                        setIsAttacherVisible(false);
+                    }}
+                />
             </div>
 
             {/* Fullscreen Modal */}
@@ -331,6 +366,15 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
                             title="Close fullscreen"
                         >
                             <BsX size="2em" />
+                        </button>
+
+                        {/* Attach Media button */}
+                        <button
+                            className="fullscreen-attach-button"
+                            onClick={() => setIsAttacherVisible(true)}
+                            title="Attach existing media"
+                        >
+                            <BsLink size="1.5em" />
                         </button>
 
                         {/* Fullscreen media container */}
