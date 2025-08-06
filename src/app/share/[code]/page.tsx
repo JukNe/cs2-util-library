@@ -17,7 +17,7 @@ interface SharedUtilityData {
 }
 
 export default function SharePage() {
-    const params = useParams();
+    const params = useParams<{ code: string }>();
     const router = useRouter();
     const { importUtilities, validateShareCode, isImporting, error } = useUtilitySharing();
     const [sharedData, setSharedData] = useState<SharedUtilityData | null>(null);
@@ -25,7 +25,7 @@ export default function SharePage() {
     const [importSuccess, setImportSuccess] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    const shareCode = params.code as string;
+    const shareCode = params.code;
 
     useEffect(() => {
         if (shareCode) {
@@ -38,7 +38,7 @@ export default function SharePage() {
                     const decodedData = atob(shareCode);
                     const parsedData = JSON.parse(decodedData);
                     setSharedData(parsedData);
-                } catch (error) {
+                } catch (error: unknown) {
                     console.error('Failed to parse share code:', error);
                     setIsValidCode(false);
                 }
@@ -58,7 +58,7 @@ export default function SharePage() {
             setTimeout(() => {
                 router.push(`/${sharedData?.mapName}`);
             }, 2000);
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Failed to import utilities:', error);
         }
     };
@@ -67,7 +67,7 @@ export default function SharePage() {
         try {
             await navigator.clipboard.writeText(window.location.href);
             // You could add a toast notification here
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Failed to copy link:', error);
         }
     };
@@ -92,7 +92,7 @@ export default function SharePage() {
                     <div className="error-message">
                         <BsX size="4rem" className="error-icon" />
                         <h1>Invalid Share Link</h1>
-                        <p>The share link you're trying to access is invalid or has expired.</p>
+                        <p>The share link you&apos;re trying to access is invalid or has expired.</p>
                         <Link href="/" className="back-button">
                             <BsArrowLeft size="1em" />
                             Go to Home
