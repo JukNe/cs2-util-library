@@ -25,7 +25,12 @@ const MapViewerInner = (props: MapViewerProps) => {
     const [selectedNade, setSelectedNade] = useState<TUtilityLandingPoint['utilityType']>()
     const [selectedTeam, setSelectedTeam] = useState<string>('T') // Default to Terrorist team
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+    const [isClient, setIsClient] = useState(false)
 
+    // Set client flag after hydration
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
     const [selectedTP, setSelectedTP] = useState<TUtilityThrowingPoint>()
     const [selectedLP, setSelectedLP] = useState<TUtilityLandingPoint>()
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -53,6 +58,19 @@ const MapViewerInner = (props: MapViewerProps) => {
     const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 })
     const { utilityFilter } = useContext(UtilityFilterContext)
     const utilityViewerRef = useRef<UtilityViewerRef>(null)
+
+    // Function to calculate sidebar width based on screen size and collapse state
+    const getSidebarWidth = () => {
+        if (!isClient) return 240; // Default for SSR
+
+        if (window.innerWidth <= 480) {
+            return isSidebarCollapsed ? 232 : 180; // 40 + 192 (12em)
+        } else if (window.innerWidth <= 768) {
+            return isSidebarCollapsed ? 242 : 200; // 50 + 192 (12em)
+        } else {
+            return isSidebarCollapsed ? 252 : 240; // 60 + 192 (12em)
+        }
+    };
 
     // Helper function to map utility types to icon file names
     const getUtilityIconSrc = (utilityType: string) => {
@@ -97,6 +115,25 @@ const MapViewerInner = (props: MapViewerProps) => {
             setLoading(false);
         }
     }, [mapName]);
+
+    // Handle screen resize to update sidebar collapse state
+    useEffect(() => {
+        if (!isClient) return;
+
+        // Set initial state based on screen size
+        const shouldBeCollapsed = window.innerWidth < 1280;
+        setIsSidebarCollapsed(shouldBeCollapsed);
+
+        const handleResize = () => {
+            const shouldBeCollapsed = window.innerWidth < 1280;
+            if (isSidebarCollapsed !== shouldBeCollapsed) {
+                setIsSidebarCollapsed(shouldBeCollapsed);
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [isClient, isSidebarCollapsed]);
 
     // Fetch utilities from database on component mount
     useEffect(() => {
@@ -1449,10 +1486,9 @@ const MapViewerInner = (props: MapViewerProps) => {
                 <div style={{
                     display: 'flex',
                     justifyContent: 'flex-start',
-                    top: '7em',
-                    left: isSidebarCollapsed ? '60px' : '240px',
                     zIndex: 100,
-                    position: 'fixed',
+                    height: 'fit-content',
+                    position: 'relative',
                     transition: 'left 0.3s ease'
                 }}  >
                     <NewNadeDropDown />
@@ -1509,7 +1545,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                     className="map-overview"
                     style={{
                         cursor: isDragging ? 'grabbing' : (zoom > 1 ? 'grab' : 'auto'),
-                        paddingLeft: isSidebarCollapsed ? '60px' : '240px',
+                        paddingLeft: `${getSidebarWidth()}px`,
                         transition: 'padding-left 0.3s ease'
                     }}
                 >

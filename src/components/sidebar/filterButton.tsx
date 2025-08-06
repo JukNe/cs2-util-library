@@ -46,7 +46,10 @@ const FilterButton = (props: FilterButtonProps) => {
 
         // Map filter types to actual icon file names for SVG
         const iconMapping: Record<string, string> = {
-            'he': 'HE'
+            'smoke': 'smoke_filter',
+            'molotov': 'molotov_filter',
+            'flash': 'flashbang_filter',
+            'he': 'he_filter'
         };
         const iconName = iconMapping[type] || type;
         return `/icons/${iconName}.svg`
@@ -58,7 +61,10 @@ const FilterButton = (props: FilterButtonProps) => {
                 <div style={{ height: '1.5em' }}>
                     <Image unoptimized alt={''} height={0} width={0} src={getIconSrc()} style={{ height: '100%', width: 'auto' }} />
                 </div>
-                <div style={{ textTransform: 'capitalize' }}>{title + ' '}{isActive && <>&#x2713;</>}</div>
+                <div style={{ textTransform: 'capitalize', height: '1.5em', display: 'flex', alignItems: 'center' }}>
+                    {title}
+                    {isActive && <span style={{ marginLeft: '0.25em' }}>&#x2713;</span>}
+                </div>
             </button>
         </>
 

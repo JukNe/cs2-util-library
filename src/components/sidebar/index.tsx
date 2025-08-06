@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './style.scss'
 import SidebarLink from "./sidebarLink"
 import { Maps } from '@/utils/constants'
@@ -14,7 +14,28 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ onCollapseChange }: SidebarProps) => {
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(() => {
+        // Initialize based on screen size
+        if (typeof window !== 'undefined') {
+            return window.innerWidth < 1280;
+        }
+        return false;
+    });
+
+    useEffect(() => {
+        const handleResize = () => {
+            const shouldBeCollapsed = window.innerWidth < 1280;
+            if (isCollapsed !== shouldBeCollapsed) {
+                setIsCollapsed(shouldBeCollapsed);
+                if (onCollapseChange) {
+                    onCollapseChange(shouldBeCollapsed);
+                }
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [isCollapsed, onCollapseChange]);
 
     const toggleSidebar = () => {
         const newCollapsedState = !isCollapsed;

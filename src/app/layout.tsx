@@ -6,7 +6,7 @@ import Navbar from "@/components/navbar";
 
 export const metadata: Metadata = {
   title: "CS2 Util Library",
-  description: "Library for CS2 utility lineups",
+  description: "Your personal library for CS2 lineups",
 };
 
 export default function RootLayout({
