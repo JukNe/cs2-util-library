@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react';
-import { BsEnvelope, BsCheckCircle, BsXCircle } from 'react-icons/bs';
+import { BsEnvelope } from 'react-icons/bs';
 import Link from 'next/link';
 import './style.scss';
 

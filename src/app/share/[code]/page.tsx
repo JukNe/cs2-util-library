@@ -6,6 +6,7 @@ import { TUtilityLandingPoint } from '@/types/utilities';
 import { BsDownload, BsCheck, BsX, BsShare, BsArrowLeft } from 'react-icons/bs';
 import { useUtilitySharing } from '@/hooks/useUtilitySharing';
 import Link from 'next/link';
+import Image from 'next/image';
 import './style.scss';
 
 interface SharedUtilityData {
@@ -159,9 +160,12 @@ export default function SharePage() {
                             {sharedData.utilities.slice(0, 6).map((utility, index) => (
                                 <div key={index} className="utility-preview-item">
                                     <div className="utility-icon">
-                                        <img
+                                        <Image
                                             src={`/icons/${utility.utilityType}.svg`}
                                             alt={utility.utilityType}
+                                            width={24}
+                                            height={24}
+                                            unoptimized
                                             onError={(e) => {
                                                 e.currentTarget.src = '/icons/flash.svg';
                                             }}

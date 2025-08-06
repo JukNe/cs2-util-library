@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { BsCheckCircle, BsXCircle, BsEnvelope } from 'react-icons/bs';
 import './style.scss';
@@ -13,19 +13,7 @@ export default function VerifyEmail() {
   const [email, setEmail] = useState('');
   const [isResending, setIsResending] = useState(false);
 
-  useEffect(() => {
-    const token = searchParams.get('token');
-
-    if (!token) {
-      setVerificationStatus('error');
-      setMessage('No verification token provided');
-      return;
-    }
-
-    verifyEmail(token);
-  }, [searchParams]);
-
-  const verifyEmail = async (token: string) => {
+  const verifyEmail = useCallback(async (token: string) => {
     try {
       const response = await fetch('/api/auth/verify-email', {
         method: 'POST',
@@ -57,11 +45,23 @@ export default function VerifyEmail() {
         }
         setMessage(data.error);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       setVerificationStatus('error');
       setMessage('An unexpected error occurred. Please try again.');
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    const token = searchParams.get('token');
+
+    if (!token) {
+      setVerificationStatus('error');
+      setMessage('No verification token provided');
+      return;
+    }
+
+    verifyEmail(token);
+  }, [searchParams, verifyEmail]);
 
   const resendVerification = async () => {
     if (!email) {
@@ -88,7 +88,7 @@ export default function VerifyEmail() {
       } else {
         setMessage(data.error);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       setMessage('Failed to resend verification email. Please try again.');
     } finally {
       setIsResending(false);
