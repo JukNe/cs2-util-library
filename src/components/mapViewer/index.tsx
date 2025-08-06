@@ -11,6 +11,7 @@ import UtilityPreview from '../utilityViewer';
 import { UtilityFilterContext } from '@/utils/contexts';
 import { UtilityViewerRef } from '../utilityViewer';
 import { ShareButton, ImportButton } from '../utilitySharing';
+import { useTutorial, TutorialOverlay, getUtilityTutorialSteps } from '../tutorial';
 
 
 interface MapViewerProps {
@@ -59,6 +60,21 @@ const MapViewerInner = (props: MapViewerProps) => {
     const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 })
     const { utilityFilter } = useContext(UtilityFilterContext)
     const utilityViewerRef = useRef<UtilityViewerRef>(null)
+
+    // Tutorial system
+    const tutorial = useTutorial();
+
+    // Initialize tutorial for first-time users
+    useEffect(() => {
+        if (isClient && !tutorial.hasSeenTutorial) {
+            // Small delay to ensure UI is fully loaded
+            const timer = setTimeout(() => {
+                tutorial.startTutorial(getUtilityTutorialSteps());
+            }, 1000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [isClient, tutorial.hasSeenTutorial, tutorial.startTutorial]);
 
 
 
@@ -1554,6 +1570,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                             onImportSuccess={refreshUtilities}
                             className="map-import-button"
                         />
+
                     </div>
                 </div>
                 <div
@@ -1591,6 +1608,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                         </div>
                     )}
                     <div
+                        className='map-image-container'
                         style={{
                             position: 'relative',
                             display: 'inline-block',
@@ -1689,6 +1707,17 @@ const MapViewerInner = (props: MapViewerProps) => {
 
                 </div>
             </div>
+
+            {/* Tutorial Overlay - rendered at document body level */}
+            <TutorialOverlay
+                isActive={tutorial.isActive}
+                currentStep={tutorial.getCurrentStep()}
+                currentStepIndex={tutorial.currentStep}
+                totalSteps={tutorial.steps.length}
+                onNext={tutorial.nextStep}
+                onPrevious={tutorial.previousStep}
+                onSkip={tutorial.skipTutorial}
+            />
         </>
     )
 }

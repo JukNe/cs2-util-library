@@ -93,6 +93,7 @@ const Header = ({ session }: HeaderProps) => {
                 <button className="logout-button" onClick={handleLogout}>
                     Sign Out
                 </button>
+
             </div>
         </header>
     );

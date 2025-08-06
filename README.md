@@ -98,6 +98,16 @@ A comprehensive web application for Counter-Strike 2 players to create, manage, 
 
 ## 📖 Usage Guide
 
+### Getting Started
+
+**First Time Users**: The app includes an interactive tutorial that will automatically start when you first visit a map. The tutorial guides you through:
+- Selecting your team and utility type
+- Adding landing points to the map
+- Creating throwing points
+- Using filters and sharing utilities
+
+You can restart the tutorial anytime by clicking the "Help" button in the map controls.
+
 ### Creating Utilities
 
 1. **Select a Map**: Choose from the 10 available competitive maps
