@@ -3,6 +3,7 @@
 import './style.scss';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { FaCheckCircle, FaEnvelope } from 'react-icons/fa';
 
 interface User {
     id: string;
@@ -12,62 +13,40 @@ interface User {
     image?: string;
 }
 
-const Header = () => {
-    const [session, setSession] = useState<{ user: User } | null>(null);
-    const [loading, setLoading] = useState(true);
+interface HeaderProps {
+    session: { user: User };
+}
+
+const Header = ({ session }: HeaderProps) => {
+    const [resending, setResending] = useState(false);
     const router = useRouter();
 
-    const checkSession = async () => {
+    const handleResendVerification = async () => {
+        if (!session?.user?.email || resending) return;
+
+        setResending(true);
         try {
-            const response = await fetch('/api/auth/check-session', {
-                method: 'GET',
-                credentials: 'include'
+            const response = await fetch('/api/auth/resend-verification', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: session.user.email }),
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.session) {
-                    setSession(data.session);
-                } else {
-                    setSession(null);
-                }
+            const data = await response.json();
+            if (data.success) {
+                alert('Verification email sent successfully!');
             } else {
-                setSession(null);
+                alert(data.error || 'Failed to send verification email');
             }
         } catch (error) {
-            console.error('Error checking session:', error);
-            setSession(null);
+            console.error('Resend verification error:', error);
+            alert('Failed to send verification email. Please try again.');
         } finally {
-            setLoading(false);
+            setResending(false);
         }
     };
-
-    useEffect(() => {
-        // Check session on component mount
-        checkSession();
-
-        // Listen for storage events (when user logs in/out in another tab)
-        const handleStorageChange = (e: StorageEvent) => {
-            if (e.key === 'auth-status') {
-                checkSession();
-            }
-        };
-
-        // Listen for custom auth events
-        const handleAuthEvent = () => {
-            checkSession();
-        };
-
-        // Add event listeners
-        window.addEventListener('storage', handleStorageChange);
-        window.addEventListener('auth-status-changed', handleAuthEvent);
-
-        // Cleanup event listeners
-        return () => {
-            window.removeEventListener('storage', handleStorageChange);
-            window.removeEventListener('auth-status-changed', handleAuthEvent);
-        };
-    }, []);
 
     const handleLogout = async () => {
         try {
@@ -77,7 +56,6 @@ const Header = () => {
             });
 
             if (response.ok) {
-                setSession(null);
                 // Trigger auth status change event
                 window.dispatchEvent(new Event('auth-status-changed'));
                 localStorage.setItem('auth-status', 'logged-out');
@@ -88,25 +66,34 @@ const Header = () => {
         }
     };
 
-    if (loading) {
-        return (
-            <header className='header'>
-                <h4>CS2 Util Library</h4>
-            </header>
-        );
-    }
-
     return (
         <header className='header'>
             <h4>CS2 Util Library</h4>
-            {session && (
-                <div className="header-user-section">
-                    <span className="user-greeting">Hello, {session.user.name}</span>
-                    <button className="logout-button" onClick={handleLogout}>
-                        Sign Out
+            <div className="header-user-section">
+                <span className="user-greeting">
+                    Hello, {session.user.name}
+                    {session.user.emailVerified && (
+                        <FaCheckCircle
+                            className="verification-checkmark"
+                            title="Email verified"
+                        />
+                    )}
+                </span>
+                {!session.user.emailVerified && (
+                    <button
+                        className="resend-verification-button"
+                        onClick={handleResendVerification}
+                        disabled={resending}
+                        title="Resend verification email"
+                    >
+                        <FaEnvelope />
+                        {resending ? 'Sending...' : 'Resend Email'}
                     </button>
-                </div>
-            )}
+                )}
+                <button className="logout-button" onClick={handleLogout}>
+                    Sign Out
+                </button>
+            </div>
         </header>
     );
 };

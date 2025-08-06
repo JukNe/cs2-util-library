@@ -69,6 +69,7 @@ export async function getMapData(mapName: string, userId?: string): Promise<TUti
       }))
     }));
 
+    console.log(`Map data fetched: ${transformedData.length} utilities for map ${mapName}, user: ${userId || 'anonymous'}`);
     return transformedData;
   } catch (error) {
     console.error('Error fetching map data:', error);

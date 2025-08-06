@@ -58,12 +58,17 @@ const FilterButton = (props: FilterButtonProps) => {
     return (
         <>
             <button onClick={handleClick} className={isActive ? 'sidebar-filter-button active' : 'sidebar-filter-button'}>
-                <div style={{ height: '1.5em' }}>
-                    <Image unoptimized alt={''} height={0} width={0} src={getIconSrc()} style={{ height: '100%', width: 'auto' }} />
-                </div>
-                <div style={{ textTransform: 'capitalize', height: '1.5em', display: 'flex', alignItems: 'center' }}>
+                <Image
+                    unoptimized
+                    alt={title}
+                    height={0}
+                    width={0}
+                    src={getIconSrc()}
+                    className="filter-icon"
+                />
+                <div className="filter-text">
                     {title}
-                    {isActive && <span style={{ marginLeft: '0.25em' }}>&#x2713;</span>}
+                    {isActive && <span className="checkmark">&#x2713;</span>}
                 </div>
             </button>
         </>

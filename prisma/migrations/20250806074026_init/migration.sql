@@ -115,6 +115,18 @@ CREATE TABLE "public"."media" (
     CONSTRAINT "media_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "public"."utility_share" (
+    "id" TEXT NOT NULL,
+    "shareCode" TEXT NOT NULL,
+    "mapName" TEXT NOT NULL,
+    "description" TEXT,
+    "sharedBy" TEXT NOT NULL,
+    "sharedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "utility_share_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "user_email_key" ON "public"."user"("email");
 
@@ -123,6 +135,9 @@ CREATE UNIQUE INDEX "session_token_key" ON "public"."session"("token");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "map_name_key" ON "public"."map"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "utility_share_shareCode_key" ON "public"."utility_share"("shareCode");
 
 -- AddForeignKey
 ALTER TABLE "public"."session" ADD CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -144,3 +159,6 @@ ALTER TABLE "public"."media" ADD CONSTRAINT "media_utilityId_fkey" FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE "public"."media" ADD CONSTRAINT "media_throwingPointId_fkey" FOREIGN KEY ("throwingPointId") REFERENCES "public"."throwing_point"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."utility_share" ADD CONSTRAINT "utility_share_sharedBy_fkey" FOREIGN KEY ("sharedBy") REFERENCES "public"."user"("id") ON DELETE CASCADE ON UPDATE CASCADE;

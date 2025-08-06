@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.scss";
-import Header from "@/components/header";
-import Navbar from "@/components/navbar";
+import { AuthWrapper } from "@/components/auth/AuthWrapper";
 
 
 export const metadata: Metadata = {
@@ -17,11 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <main>
-          <Header />
-          <Navbar />
+        <AuthWrapper>
           {children}
-        </main>
+        </AuthWrapper>
       </body>
     </html>
   );

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcrypt';
+import { sendVerificationEmail } from '@/lib/email';
+import { randomUUID } from 'crypto';
 
 export async function POST(request: NextRequest) {
     try {
@@ -32,6 +34,32 @@ export async function POST(request: NextRequest) {
         });
 
         console.log('User created successfully:', { id: user.id, email: user.email });
+
+        // Create verification token
+        const verificationToken = randomUUID();
+        const verificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+        await prisma.verification.create({
+            data: {
+                id: verificationToken,
+                identifier: email,
+                value: verificationToken,
+                expiresAt: verificationExpiresAt,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            }
+        });
+
+        // Send verification email
+        const emailSent = await sendVerificationEmail({
+            email: user.email,
+            name: user.name,
+            verificationToken
+        });
+
+        if (!emailSent) {
+            console.error('Failed to send verification email to:', user.email);
+        }
 
         // Create session for automatic sign-in
         const sessionToken = crypto.randomUUID();

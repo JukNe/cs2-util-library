@@ -5,7 +5,6 @@
     position: relative;
     width: 100%;
     height: calc(100vh - 2.5em - 3.5em); // Account for header (2.5em) and navbar (3.5em)
-    padding-left: 15em;
     overflow: hidden;
     user-select: none;
 
@@ -168,7 +167,6 @@
     gap: 0.5em;
     background: rgba(0, 0, 0, 0.8);
     padding: 1em;
-    border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.2);
 
     .main-add-button {
@@ -326,7 +324,6 @@
     align-items: center;
     background: rgba(0, 0, 0, 0.8);
     padding: 1em;
-    border-radius: 8px;
     color: white;
     min-width: 120px;
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -433,6 +430,8 @@
     display: flex;
     flex-direction: column;
     box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+    margin-top: 4em;
+    margin-right: 2em;
 }
 
 .throwing-point-modal-wrapper {
@@ -793,14 +792,8 @@
     .media-content {
         flex: 1;
         overflow-y: auto;
-        padding: 1.5rem;
     }
 }
-
-
-
-
-
 
 
 .modal-actions-section {
@@ -883,6 +876,85 @@
             &:active {
                 transform: translateY(0);
             }
+        }
+    }
+}
+
+.map-controls-container {
+    background: rgba(0, 0, 0, 0.8);
+    height: min-content
+}
+
+/* Utility Sharing Controls */
+.sharing-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+
+    .map-share-button,
+    .map-import-button {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+
+        &:hover {
+            transform: translateY(-1px);
+        }
+
+        &:active {
+            transform: translateY(0);
+        }
+
+        &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+    }
+
+    .map-share-button {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+
+        &:hover:not(:disabled) {
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+        }
+    }
+
+    .map-import-button {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+
+        &:hover:not(:disabled) {
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+    }
+}
+
+/* Responsive design for sharing controls */
+@media (max-width: 768px) {
+    .sharing-controls {
+        padding: 0.25rem;
+        gap: 0.25rem;
+
+        .map-share-button,
+        .map-import-button {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
         }
     }
 }

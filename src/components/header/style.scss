@@ -29,6 +29,58 @@
         .user-greeting {
             color: #e0e0e0;
             font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+
+            .verification-checkmark {
+                color: #4caf50;
+                font-size: 1.1em;
+                animation: fadeIn 0.3s ease-in-out;
+
+                &:hover {
+                    transform: scale(1.1);
+                    transition: transform 0.2s ease;
+                }
+            }
+        }
+
+        .resend-verification-button {
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+
+            &:hover {
+                background: linear-gradient(135deg, #45a049, #388e3c);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 8px rgba(76, 175, 80, 0.4);
+            }
+
+            &:active {
+                transform: translateY(0);
+                box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+            }
+
+            &:focus {
+                outline: none;
+                box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.5);
+            }
+
+            &:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+            }
         }
 
         .logout-button {
@@ -59,5 +111,17 @@
                 box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.5);
             }
         }
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
     }
 }

@@ -10,6 +10,7 @@ import { BsPlus, BsX, BsTrash, BsPencil, BsCheck, BsZoomIn, BsZoomOut, BsArrowCl
 import UtilityPreview from '../utilityViewer';
 import { UtilityFilterContext } from '@/utils/contexts';
 import { UtilityViewerRef } from '../utilityViewer';
+import { ShareButton, ImportButton } from '../utilitySharing';
 
 
 interface MapViewerProps {
@@ -98,16 +99,27 @@ const MapViewerInner = (props: MapViewerProps) => {
             if (response.ok) {
                 const result = await response.json();
                 if (result.success) {
+                    console.log('Refreshing utilities data:', result.data);
                     setUtility(result.data);
 
                     // Update selectedLP if it exists to point to the refreshed data
-                    if (selectedLP) {
-                        const updatedLP = result.data.find((lp: TUtilityLandingPoint) => lp.id === selectedLP.id);
-                        if (updatedLP) {
-                            setSelectedLP(updatedLP);
+                    setSelectedLP(currentSelectedLP => {
+                        if (currentSelectedLP) {
+                            const updatedLP = result.data.find((lp: TUtilityLandingPoint) => lp.id === currentSelectedLP.id);
+                            if (updatedLP) {
+                                return updatedLP;
+                            } else {
+                                // If the selected LP no longer exists, clear the selection
+                                return undefined;
+                            }
                         }
-                    }
+                        return currentSelectedLP;
+                    });
+                } else {
+                    console.error('Failed to refresh utilities:', result.error);
                 }
+            } else {
+                console.error('Failed to fetch utilities:', response.status, response.statusText);
             }
         } catch (error) {
             console.error('Error fetching utilities:', error);
@@ -137,8 +149,14 @@ const MapViewerInner = (props: MapViewerProps) => {
 
     // Fetch utilities from database on component mount
     useEffect(() => {
+        console.log('MapViewer: Initial load for map:', mapName);
         refreshUtilities();
     }, [refreshUtilities]);
+
+    // Debug: Log utility data changes
+    useEffect(() => {
+        console.log('MapViewer: Utility data updated:', utility.length, 'utilities for map:', mapName);
+    }, [utility, mapName]);
 
     const NewNadeDropDown = () => {
         return (
@@ -1483,54 +1501,70 @@ const MapViewerInner = (props: MapViewerProps) => {
 
             <div style={{ display: 'flex', flexDirection: 'row', height: '100%' }}>
                 <Sidebar onCollapseChange={setIsSidebarCollapsed} />
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'flex-start',
-                    zIndex: 100,
-                    height: 'fit-content',
-                    position: 'relative',
-                    transition: 'left 0.3s ease'
-                }}  >
-                    <NewNadeDropDown />
+                <div className='map-controls-container'>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'flex-start',
+                        zIndex: 100,
+                        height: 'fit-content',
+                        position: 'relative',
+                        transition: 'left 0.3s ease'
+                    }}  >
+                        <NewNadeDropDown />
 
-                    {/* Zoom Controls */}
-                    <div className="zoom-controls">
-                        <div className="zoom-buttons">
-                            <button
-                                onClick={handleZoomOut}
-                                className="zoom-button"
-                                title="Zoom Out"
-                                disabled={zoom <= 0.5}
-                            >
-                                <BsZoomOut size="16" />
-                            </button>
-                            <button
-                                onClick={handleResetZoom}
-                                className="zoom-button reset-button"
-                                title="Reset to 100%"
-                            >
-                                <BsArrowClockwise size="16" />
-                            </button>
-                            <button
-                                onClick={handleZoomIn}
-                                className="zoom-button"
-                                title="Zoom In"
-                                disabled={zoom >= 5}
-                            >
-                                <BsZoomIn size="16" />
-                            </button>
+                        {/* Zoom Controls */}
+                        <div className="zoom-controls">
+                            <div className="zoom-buttons">
+                                <button
+                                    onClick={handleZoomOut}
+                                    className="zoom-button"
+                                    title="Zoom Out"
+                                    disabled={zoom <= 0.5}
+                                >
+                                    <BsZoomOut size="16" />
+                                </button>
+                                <button
+                                    onClick={handleResetZoom}
+                                    className="zoom-button reset-button"
+                                    title="Reset to 100%"
+                                >
+                                    <BsArrowClockwise size="16" />
+                                </button>
+                                <button
+                                    onClick={handleZoomIn}
+                                    className="zoom-button"
+                                    title="Zoom In"
+                                    disabled={zoom >= 5}
+                                >
+                                    <BsZoomIn size="16" />
+                                </button>
+                            </div>
+                            <input
+                                type="range"
+                                min="0.5"
+                                max="5"
+                                step="0.1"
+                                value={zoom}
+                                onChange={handleZoomChange}
+                                className="zoom-slider"
+                                style={{ width: '100px', height: '8px' }}
+                            />
+                            <span className="zoom-value">{Math.round(zoom * 100)}%</span>
                         </div>
-                        <input
-                            type="range"
-                            min="0.5"
-                            max="5"
-                            step="0.1"
-                            value={zoom}
-                            onChange={handleZoomChange}
-                            className="zoom-slider"
-                            style={{ width: '100px', height: '8px' }}
+
+
+                    </div>
+                    {/* Utility Sharing Controls */}
+                    <div className="sharing-controls">
+                        <ShareButton
+                            mapName={mapName}
+                            utilities={utility.filter(item => item.map === mapName)}
+                            className="map-share-button"
                         />
-                        <span className="zoom-value">{Math.round(zoom * 100)}%</span>
+                        <ImportButton
+                            onImportSuccess={refreshUtilities}
+                            className="map-import-button"
+                        />
                     </div>
                 </div>
                 <div
@@ -1545,7 +1579,6 @@ const MapViewerInner = (props: MapViewerProps) => {
                     className="map-overview"
                     style={{
                         cursor: isDragging ? 'grabbing' : (zoom > 1 ? 'grab' : 'auto'),
-                        paddingLeft: `${getSidebarWidth()}px`,
                         transition: 'padding-left 0.3s ease'
                     }}
                 >
@@ -1577,7 +1610,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                             transition: isDragging ? 'none' : 'transform 0.1s ease-out'
                         }}
                     >
-                        <Image id='map-image' unoptimized priority width={0} height={0} src={`maps//${mapName}.webp`} alt={mapName} />
+                        <Image id='map-image' unoptimized priority width={0} height={0} src={`/maps/${mapName}.webp`} alt={mapName} />
                         {utility?.filter(item => item.map === mapName)
                             .filter(item => {
                                 // Apply utility type filtering based on sidebar selections

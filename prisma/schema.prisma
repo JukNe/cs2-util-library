@@ -15,18 +15,19 @@ datasource db {
 }
 
 model User {
-  id              String    @id @default(cuid())
-  createdAt       DateTime  @default(now())
-  email           String    @unique
+  id              String         @id @default(cuid())
+  createdAt       DateTime       @default(now())
+  email           String         @unique
   name            String
   password        String
-  emailVerified   Boolean   @default(false)
+  emailVerified   Boolean        @default(false)
   emailVerifiedAt DateTime?
   image           String?
-  updatedAt       DateTime  @default(now())
+  updatedAt       DateTime       @default(now())
   sessions        Session[]
   accounts        Account[]
   utilities       Utility[] // User can create utilities
+  sharedUtilities UtilityShare[] // User can share utilities
 
   @@map("user")
 }
@@ -136,4 +137,16 @@ model Media {
   throwingPoint   ThrowingPoint? @relation(fields: [throwingPointId], references: [id], onDelete: Cascade)
 
   @@map("media")
+}
+
+model UtilityShare {
+  id          String   @id @default(cuid())
+  shareCode   String   @unique // Base64 encoded share data
+  mapName     String // Name of the map
+  description String? // Optional description of the shared utilities
+  sharedBy    String // User ID who shared the utilities
+  sharedAt    DateTime @default(now())
+  user        User     @relation(fields: [sharedBy], references: [id], onDelete: Cascade)
+
+  @@map("utility_share")
 }
