@@ -38,7 +38,7 @@ export const sendVerificationEmail = async (data: EmailVerificationData): Promis
       return true; // Return true to not block the signup process
     }
 
-    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify-email?token=${data.verificationToken}`;
+    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${data.verificationToken}`;
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -114,7 +114,7 @@ export const sendPasswordResetEmail = async (data: PasswordResetData): Promise<b
       return true; // Return true to not block the process
     }
 
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${data.resetToken}`;
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${data.resetToken}`;
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -220,7 +220,7 @@ export const sendWelcomeEmail = async (email: string, name: string): Promise<boo
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}" 
+              <a href="${process.env.NEXT_PUBLIC_APP_URL}" 
                  style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                         color: white; 
                         padding: 15px 30px; 

@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateSession } from '@/lib/session';
+import { validateSessionWithVerification } from '@/lib/session';
 import prisma from '@/lib/prisma';
 import { TUtilityLandingPoint, TUtilityThrowingPoint } from '@/types/utilities';
 
 export async function POST(request: NextRequest) {
     try {
-        // Validate session
-        const sessionValidation = await validateSession(request);
+        // Validate session with verification status
+        const sessionValidation = await validateSessionWithVerification(request);
         if (!sessionValidation.success) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // Block unverified users from importing
+        if (!sessionValidation.isEmailVerified) {
+            return NextResponse.json({
+                success: false,
+                error: 'Please verify your email address to import utilities.',
+                requiresVerification: true
+            }, { status: 403 });
         }
 
         const { mapName, utilities } = await request.json();

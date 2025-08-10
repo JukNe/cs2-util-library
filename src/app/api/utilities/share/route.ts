@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateSession } from '@/lib/session';
+import { validateSessionWithVerification } from '@/lib/session';
 import prisma from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
     try {
-        // Validate session
-        const sessionValidation = await validateSession(request);
+        // Validate session with verification status
+        const sessionValidation = await validateSessionWithVerification(request);
         if (!sessionValidation.success) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // Block unverified users from sharing
+        if (!sessionValidation.isEmailVerified) {
+            return NextResponse.json({
+                success: false,
+                error: 'Please verify your email address to share utilities.',
+                requiresVerification: true
+            }, { status: 403 });
         }
 
         const { mapName, shareCode, description } = await request.json();
@@ -38,8 +47,8 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
     try {
-        // Validate session
-        const sessionValidation = await validateSession(request);
+        // Validate session with verification status
+        const sessionValidation = await validateSessionWithVerification(request);
         if (!sessionValidation.success) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }

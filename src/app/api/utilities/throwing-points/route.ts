@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateSession } from '@/lib/session';
+import { validateSessionWithVerification, checkUnverifiedUserLimits } from '@/lib/session';
 import prisma from '@/lib/prisma';
 
 // POST - Create a new throwing point
@@ -15,13 +15,26 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // Validate session
-        const sessionValidation = await validateSession(request);
+        // Validate session with verification status
+        const sessionValidation = await validateSessionWithVerification(request);
         if (!sessionValidation.success) {
             return NextResponse.json({
                 success: false,
                 error: 'User not authenticated'
             }, { status: 401 });
+        }
+
+        // Check unverified user limits
+        if (!sessionValidation.isEmailVerified) {
+            const limits = await checkUnverifiedUserLimits(sessionValidation.userId!);
+
+            if (!limits.canCreateThrowingPoint) {
+                return NextResponse.json({
+                    success: false,
+                    error: 'Unverified users can only create one throwing point. Please verify your email to create more throwing points.',
+                    requiresVerification: true
+                }, { status: 403 });
+            }
         }
 
         // Verify the utility exists and belongs to the current user
@@ -93,8 +106,8 @@ export async function PUT(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // Validate session
-        const sessionValidation = await validateSession(request);
+        // Validate session with verification status
+        const sessionValidation = await validateSessionWithVerification(request);
         if (!sessionValidation.success) {
             return NextResponse.json({
                 success: false,

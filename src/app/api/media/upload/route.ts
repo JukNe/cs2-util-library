@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadBlobToDatabase } from '@/lib/blob-storage';
-import { validateSession } from '@/lib/session';
+import { validateSessionWithVerification } from '@/lib/session';
 import prisma from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
@@ -21,13 +21,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Media type is required' }, { status: 400 });
     }
 
-    // Validate session
-    const sessionValidation = await validateSession(request);
+    // Validate session with verification status
+    const sessionValidation = await validateSessionWithVerification(request);
     if (!sessionValidation.success) {
       return NextResponse.json({
         success: false,
         error: 'User not authenticated'
       }, { status: 401 });
+    }
+
+    // Block unverified users from uploading media
+    if (!sessionValidation.isEmailVerified) {
+      return NextResponse.json({
+        success: false,
+        error: 'Please verify your email address to upload media.',
+        requiresVerification: true
+      }, { status: 403 });
     }
 
     // Validate file type

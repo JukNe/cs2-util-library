@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateSession } from '@/lib/session';
+import { validateSessionWithVerification, checkUnverifiedUserLimits } from '@/lib/session';
 import prisma from '@/lib/prisma';
 
 // GET - Fetch utilities for a specific map
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Validate session
-        const sessionValidation = await validateSession(request);
+        const sessionValidation = await validateSessionWithVerification(request);
         if (!sessionValidation.success) {
             return NextResponse.json({
                 success: false,
@@ -98,13 +98,26 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // Validate session
-        const sessionValidation = await validateSession(request);
+        // Validate session with verification status
+        const sessionValidation = await validateSessionWithVerification(request);
         if (!sessionValidation.success) {
             return NextResponse.json({
                 success: false,
                 error: 'User not authenticated'
             }, { status: 401 });
+        }
+
+        // Check unverified user limits
+        if (!sessionValidation.isEmailVerified) {
+            const limits = await checkUnverifiedUserLimits(sessionValidation.userId!);
+
+            if (!limits.canCreateUtility) {
+                return NextResponse.json({
+                    success: false,
+                    error: 'Unverified users can only create one utility. Please verify your email to create more utilities.',
+                    requiresVerification: true
+                }, { status: 403 });
+            }
         }
 
         // Get the map first
@@ -136,7 +149,7 @@ export async function POST(request: NextRequest) {
                 landingPointY: position.Y,
                 title: `${utilityType} at ${position.X.toFixed(1)}%, ${position.Y.toFixed(1)}%`,
                 description: `Utility landing point for ${utilityType}`,
-                createdBy: sessionValidation.userId
+                createdBy: sessionValidation.userId!
             },
             include: {
                 throwingPoints: true
@@ -191,8 +204,8 @@ export async function DELETE(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // Validate session
-        const sessionValidation = await validateSession(request);
+        // Validate session with verification status
+        const sessionValidation = await validateSessionWithVerification(request);
         if (!sessionValidation.success) {
             return NextResponse.json({
                 success: false,
@@ -204,7 +217,7 @@ export async function DELETE(request: NextRequest) {
         const utility = await prisma.utility.findFirst({
             where: {
                 id: utilityId,
-                createdBy: sessionValidation.userId
+                createdBy: sessionValidation.userId!
             }
         });
 

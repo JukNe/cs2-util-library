@@ -1,6 +1,12 @@
 import { put, del, head, PutBlobResult } from '@vercel/blob';
 import prisma from './prisma';
 import { Media } from '@/generated/prisma/index';
+import {
+  compressImage,
+  getImageMetadata,
+  getOptimalCompressionSettings,
+  shouldCompressImage
+} from './image-compression';
 
 export interface UploadBlobOptions {
   filename: string;
@@ -37,12 +43,71 @@ export async function uploadBlobToDatabase(options: UploadBlobOptions): Promise<
       throw new Error('Prisma media model is undefined');
     }
 
+    let fileToUpload: File | Buffer = options.file;
+    let filename = options.filename;
+    let compressionInfo = null;
+
+    // Apply image compression for image types
+    if (options.type === 'image' || options.type === 'gif') {
+      try {
+        // Convert File to Buffer for processing
+        const fileBuffer = options.file instanceof File
+          ? Buffer.from(await options.file.arrayBuffer())
+          : options.file;
+
+        // Get image metadata
+        const metadata = await getImageMetadata(fileBuffer);
+        console.log('Image metadata:', metadata);
+
+        // Check if compression is needed
+        if (shouldCompressImage(metadata.width!, metadata.height!, metadata.format!, metadata.size)) {
+          console.log('Compressing image...');
+
+          // Get optimal compression settings
+          const compressionSettings = getOptimalCompressionSettings(
+            metadata.width!,
+            metadata.height!,
+            metadata.format!,
+            metadata.size
+          );
+
+          // Compress the image
+          const compressedResult = await compressImage(fileBuffer, compressionSettings);
+
+          console.log(`Image compressed: ${compressedResult.originalSize} -> ${compressedResult.compressedSize} bytes (${compressedResult.compressionRatio.toFixed(1)}% reduction)`);
+
+          // Update file to upload and filename
+          fileToUpload = compressedResult.buffer;
+
+          // Update filename extension to match new format
+          const baseName = filename.split('.')[0];
+          filename = `${baseName}.${compressedResult.format}`;
+
+          compressionInfo = {
+            originalSize: compressedResult.originalSize,
+            compressedSize: compressedResult.compressedSize,
+            compressionRatio: compressedResult.compressionRatio,
+            originalFormat: metadata.format,
+            compressedFormat: compressedResult.format
+          };
+        } else {
+          console.log('Image does not need compression');
+        }
+      } catch (compressionError) {
+        console.warn('Image compression failed, uploading original:', compressionError);
+        // Continue with original file if compression fails
+      }
+    }
+
     // Upload to Vercel Blob
-    const blob = await put(options.filename, options.file, {
+    const blob = await put(filename, fileToUpload, {
       access: 'public',
     });
 
     console.log('Blob uploaded successfully:', blob.url);
+    if (compressionInfo) {
+      console.log('Compression info:', compressionInfo);
+    }
 
     // Save to database
     const media = await prisma.media.create({
