@@ -37,7 +37,7 @@ const MapViewerInner = (props: MapViewerProps) => {
     const [selectedLP, setSelectedLP] = useState<TUtilityLandingPoint>()
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isLPModalOpen, setIsLPModalOpen] = useState(false)
-    const [isLPModalMinimized, setIsLPModalMinimized] = useState(true)
+    const [isLPModalMinimized, setIsLPModalMinimized] = useState(false)
     const [isAddingThrowingPoint, setIsAddingThrowingPoint] = useState(false)
     const [hoveredTP, setHoveredTP] = useState<TUtilityThrowingPoint | null>(null)
     const [hoveredLP, setHoveredLP] = useState<TUtilityLandingPoint | null>(null)
@@ -182,7 +182,9 @@ const MapViewerInner = (props: MapViewerProps) => {
                 >
                     <BsPlus size={'2em'} />
                 </button>
-                <div className={`utility-dropdown-menu ${isDropdownOpen ? 'show' : ''}`}>
+                <div
+                    className={`utility-dropdown-menu ${isDropdownOpen ? 'show' : ''}`}
+                >
                     {/* Team Selection */}
                     <div className="team-selection">
                         <button
@@ -818,8 +820,12 @@ const MapViewerInner = (props: MapViewerProps) => {
     };
 
     const handleMapClick = (e: React.MouseEvent) => {
-        // Close dropdown if clicking outside of it
-        if (isDropdownOpen) {
+        // Check if the click target is within the dropdown area
+        const target = e.target as HTMLElement;
+        const dropdownArea = target.closest('.add-nade-dropdown');
+
+        // Only close dropdown if clicking outside of it
+        if (isDropdownOpen && !dropdownArea) {
             setIsDropdownOpen(false)
         }
 
