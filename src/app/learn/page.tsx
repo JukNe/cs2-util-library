@@ -277,7 +277,7 @@ const LearnPage = () => {
                                     </div>
                                 </div>
                                 <div className="completion-message">
-                                    <p>Congratulations! You've reviewed all the throwing points for {selectedMap}.</p>
+                                    <p>Congratulations! You&apos;ve reviewed all the throwing points for {selectedMap}.</p>
                                     <p>Keep practicing to maintain your knowledge!</p>
                                 </div>
                                 <button className="reset-button" onClick={resetQuiz}>
