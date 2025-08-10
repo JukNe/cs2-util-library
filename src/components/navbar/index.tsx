@@ -29,6 +29,12 @@ const Navbar = () => {
                 >
                     Media
                 </Link>
+                <Link
+                    href="/learn"
+                    className={`navbar-button ${isActive('/learn') ? 'active' : ''}`}
+                >
+                    Learn
+                </Link>
             </div>
         </nav>
     );
