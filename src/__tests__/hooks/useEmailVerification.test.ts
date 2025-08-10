@@ -229,7 +229,12 @@ describe('Email Verification Hooks', () => {
             })
 
             expect(result.current.showVerificationPrompt).toBe(true)
-            expect(result.current.verificationError).toEqual(error)
+            expect(result.current.verificationError).toEqual({
+                success: false,
+                error: 'Test error',
+                requiresVerification: true,
+                message: undefined
+            })
         })
 
         it('should handle error with verification message in error field', () => {
@@ -243,7 +248,12 @@ describe('Email Verification Hooks', () => {
             })
 
             expect(result.current.showVerificationPrompt).toBe(true)
-            expect(result.current.verificationError).toEqual(error)
+            expect(result.current.verificationError).toEqual({
+                success: false,
+                error: 'Please verify your email to continue',
+                requiresVerification: true,
+                message: undefined
+            })
         })
 
         it('should handle error with verification message in message field', () => {
@@ -257,7 +267,12 @@ describe('Email Verification Hooks', () => {
             })
 
             expect(result.current.showVerificationPrompt).toBe(true)
-            expect(result.current.verificationError).toEqual(error)
+            expect(result.current.verificationError).toEqual({
+                success: false,
+                error: 'Please verify your email to continue',
+                requiresVerification: true,
+                message: 'Please verify your email to continue'
+            })
         })
 
         it('should not handle non-verification errors', () => {

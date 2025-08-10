@@ -4,21 +4,16 @@ import { validateSessionWithVerification, checkUnverifiedUserLimits } from '@/li
 import prisma from '@/lib/prisma'
 
 // Define types for test data
-interface MockUser {
-    id: string;
-    emailVerified: boolean;
-    name: string;
-    email: string;
-    createdAt: Date;
-    updatedAt: Date;
-    password: string;
-    emailVerifiedAt: Date;
-    image: string | null;
-}
-
 interface MockMap {
     id: string;
     name: string;
+}
+
+interface MockThrowingPoint {
+    id: string;
+    x: number;
+    y: number;
+    utilityId: string;
 }
 
 interface MockUtility {
@@ -27,7 +22,7 @@ interface MockUtility {
     team: string;
     landingPointX: number;
     landingPointY: number;
-    throwingPoints: any[];
+    throwingPoints: MockThrowingPoint[];
     title?: string;
     description?: string;
     createdBy?: string;
@@ -64,16 +59,16 @@ const mockValidateSessionWithVerification = validateSessionWithVerification as j
 const mockCheckUnverifiedUserLimits = checkUnverifiedUserLimits as jest.MockedFunction<typeof checkUnverifiedUserLimits>
 const mockPrisma = prisma as jest.Mocked<typeof prisma> & {
     map: {
-        findUnique: jest.MockedFunction<any>;
+        findUnique: jest.MockedFunction<() => Promise<MockMap | null>>;
     };
     utility: {
-        findMany: jest.MockedFunction<any>;
-        create: jest.MockedFunction<any>;
-        findFirst: jest.MockedFunction<any>;
-        delete: jest.MockedFunction<any>;
+        findMany: jest.MockedFunction<() => Promise<MockUtility[]>>;
+        create: jest.MockedFunction<() => Promise<MockUtility>>;
+        findFirst: jest.MockedFunction<() => Promise<MockUtility | null>>;
+        delete: jest.MockedFunction<() => Promise<MockUtility>>;
     };
     throwingPoint: {
-        count: jest.MockedFunction<any>;
+        count: jest.MockedFunction<() => Promise<number>>;
     };
 }
 

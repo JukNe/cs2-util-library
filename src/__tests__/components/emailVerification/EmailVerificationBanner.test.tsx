@@ -2,7 +2,6 @@ import React from 'react'
 import { render, screen, fireEvent } from '@/__tests__/utils/test-utils'
 import { waitFor } from '@testing-library/react'
 import { EmailVerificationBanner } from '@/components/emailVerification/EmailVerificationBanner'
-import { mockApiResponses, mockFetchResponse } from '@/__tests__/utils/test-utils'
 
 // Mock fetch
 global.fetch = jest.fn()
@@ -106,7 +105,7 @@ describe('EmailVerificationBanner', () => {
     })
 
     it('should handle missing onResendVerification prop gracefully', () => {
-        const { onResendVerification, ...propsWithoutHandler } = defaultProps
+        const { onResendVerification: _onResendVerification, ...propsWithoutHandler } = defaultProps
         render(<EmailVerificationBanner {...propsWithoutHandler} />)
 
         const resendButton = screen.getByRole('button', { name: 'Resend Email' })

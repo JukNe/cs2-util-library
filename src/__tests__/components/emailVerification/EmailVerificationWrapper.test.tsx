@@ -2,7 +2,7 @@ import React from 'react'
 import { render, screen } from '@/__tests__/utils/test-utils'
 import { waitFor } from '@testing-library/react'
 import { EmailVerificationWrapper } from '@/components/emailVerification/EmailVerificationWrapper'
-import { mockSession, mockVerifiedSession, mockApiResponses, mockFetchResponse } from '@/__tests__/utils/test-utils'
+import { mockSession, mockVerifiedSession, mockApiResponses } from '@/__tests__/utils/test-utils'
 
 // Mock fetch
 global.fetch = jest.fn()
@@ -13,8 +13,10 @@ jest.mock('@/hooks/useEmailVerification', () => ({
     useUserLimits: jest.fn(),
 }))
 
-const mockUseEmailVerification = require('@/hooks/useEmailVerification').useEmailVerification
-const mockUseUserLimits = require('@/hooks/useEmailVerification').useUserLimits
+import { useEmailVerification, useUserLimits } from '@/hooks/useEmailVerification'
+
+const mockUseEmailVerification = useEmailVerification as jest.MockedFunction<typeof useEmailVerification>
+const mockUseUserLimits = useUserLimits as jest.MockedFunction<typeof useUserLimits>
 
 describe('EmailVerificationWrapper', () => {
     beforeEach(() => {
