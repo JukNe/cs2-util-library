@@ -177,7 +177,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                             setIsDropdownOpen(!isDropdownOpen);
                         }
                     }}
-                    className="main-add-button"
+                    className={`main-add-button ${selectedNade ? 'active' : ''}`}
                     title={selectedNade ? "Cancel adding utility" : "Add new utility"}
                 >
                     <BsPlus size={'2em'} />
@@ -331,7 +331,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                         Y: yPercent
                     },
                     title: `Throwing Point ${selectedLP.throwingPoints.length + 1}`,
-                    description: 'Placeholder description'
+                    description: ''
                 }),
                 credentials: 'include'
             });
@@ -458,53 +458,10 @@ const MapViewerInner = (props: MapViewerProps) => {
 
     const handleAddThrowingPointClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        setIsAddingThrowingPoint(true);
+        setIsAddingThrowingPoint(prev => !prev);
     };
 
-    const handleDeleteLandingPoint = async (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (!selectedLP) return;
 
-        // Show confirmation dialog
-        const confirmed = window.confirm(
-            `Are you sure you want to delete this ${selectedLP.utilityType} landing point?\n\nThis will also delete all ${selectedLP.throwingPoints.length} throwing point(s). Associated media will be unattached and can be reused.`
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
-
-
-        try {
-            const response = await fetch(`/api/utilities/${selectedLP.id}`, {
-                method: 'DELETE',
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                if (result.success) {
-                    setUtility((previous) => previous.filter(item => item !== selectedLP))
-                    setSelectedLP(undefined);
-                    setSelectedTP(undefined);
-                    setIsModalOpen(false);
-                    setIsLPModalOpen(false);
-
-                } else {
-                    console.error('Failed to delete landing point:', result.error);
-                    alert('Failed to delete landing point. Please try again.');
-                }
-            } else {
-                const errorText = await response.text();
-                console.error('Failed to delete landing point:', response.status, errorText);
-                alert('Failed to delete landing point. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error deleting landing point:', error);
-            alert('Error deleting landing point. Please try again.');
-        }
-    };
 
     const handleDeleteThrowingPoint = (tp: TUtilityThrowingPoint, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -1145,13 +1102,22 @@ const MapViewerInner = (props: MapViewerProps) => {
 
                         <div className="header-actions">
                             {!isEditingDescription && !isLPModalMinimized && (
-                                <button
-                                    onClick={handleEditClick}
-                                    className="edit-button"
-                                    title="Edit title, description, and media"
-                                >
-                                    <BsPencil size="1.5em" />
-                                </button>
+                                <>
+                                    <button
+                                        onClick={handleAddThrowingPointClick}
+                                        className={`add-throwing-point-button ${isAddingThrowingPoint ? 'active' : ''}`}
+                                        title={isAddingThrowingPoint ? "Cancel adding throwing point" : "Add throwing point"}
+                                    >
+                                        <BsPlus size="1.5em" />
+                                    </button>
+                                    <button
+                                        onClick={handleEditClick}
+                                        className="edit-button"
+                                        title="Edit title, description, and media"
+                                    >
+                                        <BsPencil size="1.5em" />
+                                    </button>
+                                </>
                             )}
                             <button
                                 onClick={handleLPModalToggleMinimize}
@@ -1176,15 +1142,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                             {isEditingDescription && (
                                 <div className="edit-actions-bar">
                                     <div className="edit-actions">
-                                        <button
-                                            className="delete-button"
-                                            onClick={(e) => handleDeleteLandingPoint(e)}
-                                            disabled={isSavingTitle || isSavingDescription}
-                                            title="Delete landing point"
-                                        >
-                                            <BsTrash size="1.2em" />
-                                            Delete
-                                        </button>
+
                                         <div className="action-group">
                                             <button
                                                 className="cancel-button"
@@ -1511,12 +1469,12 @@ const MapViewerInner = (props: MapViewerProps) => {
                 </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'row', height: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 6em)' }}>
                 <Sidebar onCollapseChange={setIsSidebarCollapsed} />
                 <div className='map-controls-container'>
                     <div style={{
                         display: 'flex',
-                        justifyContent: 'flex-start',
+                        justifyContent: 'center',
                         zIndex: 100,
                         height: 'fit-content',
                         position: 'relative',
@@ -1668,30 +1626,8 @@ const MapViewerInner = (props: MapViewerProps) => {
                                         </button>
                                         {isSelected && (
                                             <>
-                                                <button
-                                                    className="add-throwing-point-button"
-                                                    onClick={handleAddThrowingPointClick}
-                                                    style={{
-                                                        left: `${item.position.X + (2 / zoom)}%`,
-                                                        top: `${item.position.Y - (2 / zoom)}%`,
-                                                        transform: `translate(-50%, -50%) scale(${1 / zoom})`
-                                                    }}
-                                                    title="Add throwing point"
-                                                >
-                                                    <BsPlus size="1em" />
-                                                </button>
-                                                <button
-                                                    className="delete-landing-point-button"
-                                                    onClick={handleDeleteLandingPoint}
-                                                    style={{
-                                                        left: `${item.position.X - (2 / zoom)}%`,
-                                                        top: `${item.position.Y - (2 / zoom)}%`,
-                                                        transform: `translate(-50%, -50%) scale(${1 / zoom})`
-                                                    }}
-                                                    title="Delete landing point"
-                                                >
-                                                    <BsTrash size="1em" />
-                                                </button>
+
+
                                             </>
                                         )}
                                         {isSelected && (

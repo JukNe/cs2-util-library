@@ -147,8 +147,8 @@ export async function POST(request: NextRequest) {
                 team: normalizedTeam,
                 landingPointX: position.X,
                 landingPointY: position.Y,
-                title: `${utilityType} at ${position.X.toFixed(1)}%, ${position.Y.toFixed(1)}%`,
-                description: `Utility landing point for ${utilityType}`,
+                title: `${utilityType} landingpoint`,
+                description: ``,
                 createdBy: sessionValidation.userId!
             },
             include: {

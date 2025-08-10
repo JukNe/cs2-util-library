@@ -1,311 +1,181 @@
-.utility-preview {
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  padding: 2rem;
-  width: 100%;
-  margin: 0 auto;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  position: relative;
-  z-index: 1010;
-
-  .preview-header {
-    display: flex;
-    align-items: flex-start;
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 2px solid #e9ecef;
+  .utility-preview {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    padding: 2rem;
     width: 100%;
-    position: relative;
-
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: -2px;
-      left: 0;
-      width: 60px;
-      height: 2px;
-      background: linear-gradient(90deg, #4CAF50, #45a049);
-      border-radius: 1px;
-    }
-
-    .description-section {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      flex: 1;
-      min-width: 0;
-      position: relative;
-
-      .description-display {
-        display: flex;
-        align-items: flex-start;
-        gap: 1rem;
-        position: absolute;
-        top: 0;
-        right: 0;
-        z-index: 10;
-
-        .description-text {
-          margin: 0;
-          color: #495057;
-          line-height: 1.6;
-          font-size: 1rem;
-          flex: 1;
-          min-width: 0;
-        }
-
-        .edit-button {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          border: none;
-          border-radius: 8px;
-          padding: 0.5rem 0.75rem;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-size: 0.9rem;
-          font-weight: 500;
-          box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-          flex-shrink: 0;
-
-          &:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-          }
-
-          &:active {
-            transform: translateY(0);
-          }
-
-          &.editing {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
-
-            &:hover {
-              box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
-            }
-          }
-        }
-      }
-
-      .description-edit {
-        width: 100%;
-        margin-top: 3rem;
-
-        .description-textarea {
-          width: 100%;
-          min-height: 80px;
-          padding: 1rem;
-          border: 2px solid #e9ecef;
-          border-radius: 8px;
-          font-family: inherit;
-          font-size: 1rem;
-          line-height: 1.5;
-          color: #495057;
-          background: white;
-          resize: vertical;
-          transition: border-color 0.2s ease;
-          margin-bottom: 1rem;
-
-          &:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-          }
-
-          &::placeholder {
-            color: #adb5bd;
-          }
-        }
-
-        .edit-actions {
-          display: flex;
-          gap: 0.75rem;
-          justify-content: flex-end;
-
-          .save-button,
-          .cancel-button {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
-            &:hover {
-              transform: translateY(-1px);
-            }
-
-            &:active {
-              transform: translateY(0);
-            }
-
-            &:disabled {
-              opacity: 0.6;
-              cursor: not-allowed;
-              transform: none;
-            }
-          }
-
-          .save-button {
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-            color: white;
-            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
-
-            &:hover:not(:disabled) {
-              box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
-            }
-          }
-
-          .cancel-button {
-            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-            color: white;
-            box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
-
-            &:hover:not(:disabled) {
-              box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  .preview-content {
-    flex: 1;
+    height: 100%;
+    margin: 0 auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    z-index: 1010;
 
-    .position-info,
-    .url-section {
+    .preview-header {
+      display: flex;
+      align-items: flex-start;
       margin-bottom: 2rem;
-      padding: 1.5rem;
-      background: rgba(255, 255, 255, 0.8);
-      border-radius: 12px;
-      border: 1px solid rgba(0, 0, 0, 0.05);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-
-      p {
-        margin: 0.5rem 0;
-        color: #34495e;
-        line-height: 1.6;
-        font-size: 0.95rem;
-      }
-
-      strong {
-        color: #2c3e50;
-        font-weight: 600;
-      }
-
-      a {
-        color: #4CAF50;
-        text-decoration: none;
-        word-break: break-all;
-        font-weight: 500;
-        transition: all 0.2s ease;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        background: rgba(76, 175, 80, 0.1);
-
-        &:hover {
-          text-decoration: none;
-          background: rgba(76, 175, 80, 0.2);
-          color: #45a049;
-        }
-      }
-    }
-
-    .media-carousel-section {
+      padding-bottom: 1.5rem;
+      border-bottom: 2px solid #e9ecef;
       width: 100%;
-      flex: 1;
-      min-height: 0;
-    }
-  }
-}
+      position: relative;
 
-// Responsive adjustments
-@media (max-width: 768px) {
-  .utility-preview {
-    padding: 1.5rem;
-    border-radius: 12px;
-    height: calc(100vh - 5em - 3rem);
-
-    .preview-header {
-      margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 60px;
+        height: 2px;
+        background: linear-gradient(90deg, #4CAF50, #45a049);
+        border-radius: 1px;
+      }
 
       .description-section {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        flex: 1;
+        min-width: 0;
+        position: relative;
+
         .description-display {
-          position: absolute;
-          top: 0;
-          right: 0;
-          z-index: 10;
-        }
-      }
-    }
-
-    .preview-content {
-
-      .position-info,
-      .url-section {
-        padding: 1rem;
-        margin-bottom: 1.5rem;
-      }
-
-      .media-carousel-section {
-        margin-top: 1.5rem;
-        padding-top: 1.5rem;
-      }
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .utility-preview {
-    padding: 1rem;
-    border-radius: 8px;
-    height: calc(100vh - 5em - 2rem);
-
-    .preview-header {
-      .description-section {
-        .description-display {
+          display: flex;
+          align-items: flex-start;
+          gap: 1rem;
           position: absolute;
           top: 0;
           right: 0;
           z-index: 10;
 
           .description-text {
-            font-size: 0.9rem;
+            margin: 0;
+            color: #495057;
+            line-height: 1.6;
+            font-size: 1rem;
+            flex: 1;
+            min-width: 0;
           }
 
           .edit-button {
-            padding: 0.4rem 0.6rem;
-            font-size: 0.8rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            flex-shrink: 0;
+
+            &:hover {
+              transform: translateY(-1px);
+              box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            }
+
+            &:active {
+              transform: translateY(0);
+            }
+
+            &.editing {
+              background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+              box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+
+              &:hover {
+                box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+              }
+            }
           }
         }
 
         .description-edit {
+          width: 100%;
+          margin-top: 3rem;
+
           .description-textarea {
-            font-size: 0.9rem;
-            padding: 0.75rem;
+            width: 100%;
+            min-height: 80px;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+            background: white;
+            resize: vertical;
+            transition: border-color 0.2s ease;
+            margin-bottom: 1rem;
+
+            &:focus {
+              outline: none;
+              border-color: #667eea;
+              box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
+
+            &::placeholder {
+              color: #adb5bd;
+            }
           }
 
           .edit-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
 
             .save-button,
             .cancel-button {
-              padding: 0.6rem 1.2rem;
-              font-size: 0.8rem;
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              padding: 0.75rem 1.5rem;
+              border: none;
+              border-radius: 8px;
+              font-size: 0.9rem;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.2s ease;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+              &:hover {
+                transform: translateY(-1px);
+              }
+
+              &:active {
+                transform: translateY(0);
+              }
+
+              &:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+              }
+            }
+
+            .save-button {
+              background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+              color: white;
+              box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+
+              &:hover:not(:disabled) {
+                box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+              }
+            }
+
+            .cancel-button {
+              background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+              color: white;
+              box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+
+              &:hover:not(:disabled) {
+                box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+              }
             }
           }
         }
@@ -313,17 +183,153 @@
     }
 
     .preview-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
 
       .position-info,
       .url-section {
-        padding: 0.75rem;
-        margin-bottom: 1rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+        p {
+          margin: 0.5rem 0;
+          color: #34495e;
+          line-height: 1.6;
+          font-size: 0.95rem;
+        }
+
+        strong {
+          color: #2c3e50;
+          font-weight: 600;
+        }
+
+        a {
+          color: #4CAF50;
+          text-decoration: none;
+          word-break: break-all;
+          font-weight: 500;
+          transition: all 0.2s ease;
+          padding: 0.25rem 0.5rem;
+          border-radius: 4px;
+          background: rgba(76, 175, 80, 0.1);
+
+          &:hover {
+            text-decoration: none;
+            background: rgba(76, 175, 80, 0.2);
+            color: #45a049;
+          }
+        }
       }
 
       .media-carousel-section {
-        margin-top: 1rem;
-        padding-top: 1rem;
+        width: 100%;
+        flex: 1;
+        min-height: 400px;
+        height: 100%;
       }
     }
   }
-}
+
+  // Responsive adjustments
+  @media (max-width: 768px) {
+    .utility-preview {
+      padding: 1.5rem;
+      border-radius: 12px;
+      height: calc(100vh - 5em - 3rem);
+
+      .preview-header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+
+        .description-section {
+          .description-display {
+            position: absolute;
+            top: 0;
+            right: 0;
+            z-index: 10;
+          }
+        }
+      }
+
+      .preview-content {
+
+        .position-info,
+        .url-section {
+          padding: 1rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .media-carousel-section {
+          margin-top: 1.5rem;
+          padding-top: 1.5rem;
+          min-height: 300px;
+          height: 100%;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    .utility-preview {
+      padding: 1rem;
+      border-radius: 8px;
+      height: calc(100vh - 5em - 2rem);
+
+      .preview-header {
+        .description-section {
+          .description-display {
+            position: absolute;
+            top: 0;
+            right: 0;
+            z-index: 10;
+
+            .description-text {
+              font-size: 0.9rem;
+            }
+
+            .edit-button {
+              padding: 0.4rem 0.6rem;
+              font-size: 0.8rem;
+            }
+          }
+
+          .description-edit {
+            .description-textarea {
+              font-size: 0.9rem;
+              padding: 0.75rem;
+            }
+
+            .edit-actions {
+
+              .save-button,
+              .cancel-button {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.8rem;
+              }
+            }
+          }
+        }
+      }
+
+      .preview-content {
+
+        .position-info,
+        .url-section {
+          padding: 0.75rem;
+          margin-bottom: 1rem;
+        }
+
+        .media-carousel-section {
+          margin-top: 1rem;
+          padding-top: 1rem;
+          min-height: 250px;
+          height: 100%;
+        }
+      }
+    }
+  }

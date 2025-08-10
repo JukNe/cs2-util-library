@@ -230,10 +230,11 @@ const MediaDisplay = ({ media, onMediaDeleted }: MediaDisplayProps) => {
                                 />
                             ) : (
                                 <Image
+                                    width={0}
+                                    unoptimized
+                                    height={0}
                                     src={selectedMedia.url}
                                     alt={selectedMedia.title || 'Media'}
-                                    width={800}
-                                    height={600}
                                     className="modal-image"
                                 />
                             )}
