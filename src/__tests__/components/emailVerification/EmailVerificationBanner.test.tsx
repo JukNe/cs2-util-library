@@ -105,7 +105,7 @@ describe('EmailVerificationBanner', () => {
     })
 
     it('should handle missing onResendVerification prop gracefully', () => {
-        const { onResendVerification: _onResendVerification, ...propsWithoutHandler } = defaultProps
+        const { onResendVerification, ...propsWithoutHandler } = defaultProps
         render(<EmailVerificationBanner {...propsWithoutHandler} />)
 
         const resendButton = screen.getByRole('button', { name: 'Resend Email' })

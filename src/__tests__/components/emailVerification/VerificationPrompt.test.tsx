@@ -116,7 +116,7 @@ describe('VerificationPrompt', () => {
     })
 
     it('should handle missing onResendVerification prop gracefully', () => {
-        const { onResendVerification, ...propsWithoutHandler } = defaultProps
+        const { onResendVerification: _onResendVerification, ...propsWithoutHandler } = defaultProps
         render(<VerificationPrompt {...propsWithoutHandler} />)
 
         const resendButton = screen.getByRole('button', { name: 'Resend Email' })
