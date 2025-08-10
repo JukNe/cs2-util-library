@@ -26,8 +26,7 @@ const getFileExtension = (fileName: string): string | undefined => {
     return fileName.split('.').pop()?.toLowerCase();
 };
 
-const getFileType = (extension: string): 'image' | 'video' | 'gif' => {
-    if (extension === 'gif') return 'gif';
+const getFileType = (extension: string): 'image' | 'video' => {
     if (VALID_EXTENSIONS.video.includes(extension as typeof VALID_EXTENSIONS.video[number])) return 'video';
     return 'image';
 };
@@ -156,7 +155,8 @@ const MediaUploader = ({
             formData.append('file', selectedFile);
 
             const extension = getFileExtension(selectedFile.name);
-            const type = extension ? getFileType(extension) : 'image';
+            const fileType = extension ? getFileType(extension) : 'image';
+            const type = extension === 'gif' ? 'gif' : fileType;
 
             formData.append('type', type);
             formData.append('title', selectedFile.name);
