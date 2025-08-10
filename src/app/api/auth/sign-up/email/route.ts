@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
             }
         });
 
-        console.log('User created successfully:', { id: user.id, email: user.email });
+
 
         // Create verification token
         const verificationToken = randomUUID();
@@ -98,12 +98,6 @@ export async function POST(request: NextRequest) {
             expires: expiresAt,
             path: '/',
             maxAge: 7 * 24 * 60 * 60 // 7 days in seconds
-        });
-
-        console.log('Session cookie set:', {
-            token: sessionToken,
-            expires: expiresAt,
-            secure: process.env.NODE_ENV === 'production'
         });
 
         return response;

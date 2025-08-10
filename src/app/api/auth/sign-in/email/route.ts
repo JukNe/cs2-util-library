@@ -7,8 +7,7 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { email, password, rememberMe } = body;
 
-        console.log('=== CUSTOM SIGNIN DEBUG ===');
-        console.log('Signin attempt for email:', email);
+        
 
         // Find user by email
         const user = await prisma.user.findUnique({
@@ -16,7 +15,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (!user) {
-            console.log('User not found');
+    
             return NextResponse.json({
                 success: false,
                 error: "Invalid email or password"
@@ -27,14 +26,14 @@ export async function POST(request: NextRequest) {
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
-            console.log('Invalid password');
+    
             return NextResponse.json({
                 success: false,
                 error: "Invalid email or password"
             }, { status: 401 });
         }
 
-        console.log('Password verified successfully');
+
 
         // Create session manually in the database
         const sessionToken = crypto.randomUUID();
@@ -71,13 +70,6 @@ export async function POST(request: NextRequest) {
             expires: expiresAt,
             path: '/',
             maxAge: (rememberMe ? 30 : 7) * 24 * 60 * 60 // Convert days to seconds
-        });
-
-        console.log('Session cookie set:', {
-            token: sessionToken,
-            expires: expiresAt,
-            rememberMe,
-            secure: process.env.NODE_ENV === 'production'
         });
 
         return response;

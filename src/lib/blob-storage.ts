@@ -23,11 +23,7 @@ export interface BlobUploadResult {
  */
 export async function uploadBlobToDatabase(options: UploadBlobOptions): Promise<BlobUploadResult> {
   try {
-    console.log('Starting uploadBlobToDatabase...');
-    console.log('Prisma client:', prisma);
-    console.log('Prisma client type:', typeof prisma);
-    console.log('Prisma media model:', prisma?.media);
-    console.log('Prisma media model type:', typeof prisma?.media);
+
 
     if (!prisma) {
       throw new Error('Prisma client is undefined');
@@ -42,7 +38,7 @@ export async function uploadBlobToDatabase(options: UploadBlobOptions): Promise<
       access: 'public',
     });
 
-    console.log('Blob uploaded successfully:', blob.url);
+
 
     // Save to database
     const media = await prisma.media.create({
@@ -57,7 +53,7 @@ export async function uploadBlobToDatabase(options: UploadBlobOptions): Promise<
       },
     });
 
-    console.log('Media saved to database:', media);
+
 
     return { blob, media };
   } catch (error) {

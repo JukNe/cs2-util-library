@@ -49,7 +49,7 @@ export const ImportButton = ({ onImportSuccess, className = '' }: ImportButtonPr
             // Call success callback with a small delay to ensure server processing
             if (onImportSuccess) {
                 setTimeout(() => {
-                    console.log('Triggering utilities refresh after import');
+            
                     onImportSuccess();
                 }, 500);
             }

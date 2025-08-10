@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
             importedUtilities.push(importedUtility);
         }
 
-        console.log(`Import successful: ${importedUtilities.length} utilities imported for map ${mapName}`);
+
         return NextResponse.json({
             success: true,
             data: importedUtilities,

@@ -104,7 +104,7 @@ const MapViewerInner = (props: MapViewerProps) => {
             if (response.ok) {
                 const result = await response.json();
                 if (result.success) {
-                    console.log('Refreshing utilities data:', result.data);
+
                     setUtility(result.data);
 
                     // Update selectedLP if it exists to point to the refreshed data
@@ -154,13 +154,13 @@ const MapViewerInner = (props: MapViewerProps) => {
 
     // Fetch utilities from database on component mount
     useEffect(() => {
-        console.log('MapViewer: Initial load for map:', mapName);
+
         refreshUtilities();
     }, [refreshUtilities, mapName]);
 
     // Debug: Log utility data changes
     useEffect(() => {
-        console.log('MapViewer: Utility data updated:', utility.length, 'utilities for map:', mapName);
+
     }, [utility, mapName]);
 
     const NewNadeDropDown = () => {
@@ -1469,7 +1469,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                 </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 6em)' }}>
+            <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 6.5em)' }}>
                 <Sidebar onCollapseChange={setIsSidebarCollapsed} />
                 <div className='map-controls-container'>
                     <div style={{
