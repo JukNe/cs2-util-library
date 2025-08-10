@@ -9,13 +9,14 @@ const VALID_EXTENSIONS = {
     video: ['mp4', 'webm', 'mov', 'avi'],
 } as const;
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
 
 interface MediaUploaderProps {
     utilityId?: string;
     throwingPointId?: string;
     onUploadComplete?: (media: Media) => void;
-    maxFileSize?: number;
+    maxFileSize?: number; // Deprecated: kept for backward compatibility
     allowedTypes?: ('image' | 'video')[];
     variant?: 'default' | 'standalone';
 }
@@ -39,7 +40,11 @@ const formatFileSize = (bytes: number): string => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-const validateFile = (file: File, maxFileSize: number): string | null => {
+const getFileSizeLimit = (fileType: 'image' | 'video'): number => {
+    return fileType === 'video' ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+};
+
+const validateFile = (file: File): string | null => {
     const extension = getFileExtension(file.name);
 
     if (!extension) {
@@ -51,8 +56,14 @@ const validateFile = (file: File, maxFileSize: number): string | null => {
         return `Invalid file type. Allowed: ${validExtensions.join(', ')}`;
     }
 
-    if (file.size > maxFileSize) {
-        return `File size must be less than ${formatFileSize(maxFileSize)}`;
+    // Determine file type and apply appropriate size limit
+    const fileType = getFileType(extension);
+    const maxSize = getFileSizeLimit(fileType);
+
+    if (file.size > maxSize) {
+        const maxSizeFormatted = formatFileSize(maxSize);
+        const fileTypeName = fileType === 'video' ? 'video' : 'image';
+        return `${fileTypeName.charAt(0).toUpperCase() + fileTypeName.slice(1)} files must be less than ${maxSizeFormatted}`;
     }
 
     return null;
@@ -62,7 +73,7 @@ const MediaUploader = ({
     utilityId,
     throwingPointId,
     onUploadComplete,
-    maxFileSize = MAX_FILE_SIZE,
+    maxFileSize, // Keep for backward compatibility but not used
     allowedTypes = ['image', 'video'],
     variant = 'default'
 }: MediaUploaderProps) => {
@@ -91,7 +102,7 @@ const MediaUploader = ({
     const handleFileSelect = useCallback((file: File) => {
         setError(null);
 
-        const validationError = validateFile(file, maxFileSize);
+        const validationError = validateFile(file);
         if (validationError) {
             setError(validationError);
             return;
@@ -266,14 +277,14 @@ const MediaUploader = ({
                                     </div>
                                 </div>
                                 <p className="file-size-limit">
-                                    Maximum file size: {formatFileSize(maxFileSize)}
+                                    Maximum file size: Images 10MB, Videos 50MB
                                 </p>
                             </>
                         ) : (
                             <>
                                 <p className="upload-text">Click or drag files here to upload</p>
                                 <p className="upload-hint">
-                                    Supports {allowedTypes.join(' and ')} files up to {formatFileSize(maxFileSize)}
+                                    Supports {allowedTypes.join(' and ')} files (Images: 10MB, Videos: 50MB)
                                 </p>
                             </>
                         )}
