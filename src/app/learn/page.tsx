@@ -373,8 +373,8 @@ const LearnPage = () => {
                                                                 width={0}
                                                                 height={0}
                                                                 unoptimized
+                                                                layout="fill"
                                                                 className="media-image"
-                                                                style={{ objectFit: 'cover' }}
                                                             />
                                                         ) : (
                                                             <video
