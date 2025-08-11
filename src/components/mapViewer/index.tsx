@@ -1130,7 +1130,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                                 className="minimize-button"
                                 title={isLPModalMinimized ? "Expand" : "Minimize"}
                             >
-                                {isLPModalMinimized ? <BsChevronUp size={'1.5em'} /> : <BsChevronDown size={'1.5em'} />}
+                                {isLPModalMinimized ? <BsChevronDown size={'1.5em'} /> : <BsChevronUp size={'1.5em'} />}
                             </button>
                             <button
                                 onClick={handleLPModalClose}
