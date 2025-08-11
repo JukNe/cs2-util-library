@@ -231,8 +231,9 @@ const MediaDisplay = ({ media, onMediaDeleted }: MediaDisplayProps) => {
                             ) : (
                                 <Image
                                     width={0}
-                                    unoptimized
                                     height={0}
+                                    unoptimized
+                                    layout="fill"
                                     src={selectedMedia.url}
                                     alt={selectedMedia.title || 'Media'}
                                     className="modal-image"

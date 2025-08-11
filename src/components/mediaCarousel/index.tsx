@@ -181,6 +181,7 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
                     alt={mediaItem.title || 'Media'}
                     width={0}
                     height={0}
+                    layout="fill"
                     unoptimized
                     className={`carousel-image ${isFullscreenMode ? 'fullscreen-image' : ''}`}
                 />
