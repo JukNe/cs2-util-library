@@ -517,6 +517,55 @@ const MapViewerInner = (props: MapViewerProps) => {
         }
     };
 
+    const handleDeleteLandingPoint = (lp: TUtilityLandingPoint, e: React.MouseEvent) => {
+        e.stopPropagation();
+
+        // Show confirmation dialog
+        const confirmed = window.confirm(
+            `Are you sure you want to delete this landing point?\n\nTitle: ${lp.title || `${lp.utilityType} Utility (${lp.team})`}\nThis will also delete all associated throwing points and media.`
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            fetch(`/api/utilities/${lp.id}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            }).then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Failed to delete landing point');
+            }).then(result => {
+                if (result.success) {
+                    // Remove from local state
+                    setUtility((previous) => previous.filter(item => item !== lp));
+
+                    // Close modals if the deleted landing point was selected
+                    if (selectedLP === lp) {
+                        setSelectedLP(undefined);
+                        setIsLPModalOpen(false);
+                    }
+                    if (selectedTP && lp.throwingPoints.includes(selectedTP)) {
+                        setSelectedTP(undefined);
+                        setIsModalOpen(false);
+                    }
+                } else {
+                    console.error('Failed to delete landing point:', result.error);
+                    alert('Failed to delete landing point. Please try again.');
+                }
+            }).catch(error => {
+                console.error('Error deleting landing point:', error);
+                alert('Error deleting landing point. Please try again.');
+            });
+        } catch (error) {
+            console.error('Error deleting landing point:', error);
+            alert('Error deleting landing point. Please try again.');
+        }
+    };
+
     const handleTPClick = (data: TUtilityThrowingPoint, e: React.MouseEvent) => {
         e.stopPropagation();
         setSelectedTP(data);
@@ -1148,7 +1197,15 @@ const MapViewerInner = (props: MapViewerProps) => {
                             {isEditingDescription && (
                                 <div className="edit-actions-bar">
                                     <div className="edit-actions">
-
+                                        <button
+                                            className="delete-button"
+                                            onClick={(e) => handleDeleteLandingPoint(selectedLP!, e)}
+                                            disabled={isSavingTitle || isSavingDescription}
+                                            title="Delete landing point"
+                                        >
+                                            <BsTrash size="1.2em" />
+                                            Delete
+                                        </button>
                                         <div className="action-group">
                                             <button
                                                 className="cancel-button"
