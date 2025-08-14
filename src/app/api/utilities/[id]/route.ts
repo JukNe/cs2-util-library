@@ -9,7 +9,7 @@ export async function PATCH(
 ) {
     try {
         const body = await request.json();
-        const { title, description } = body;
+        const { title, description, position } = body;
         const { id: utilityId } = await params;
 
         if (!utilityId) {
@@ -52,9 +52,15 @@ export async function PATCH(
         const updateData: {
             title?: string;
             description?: string | null;
+            landingPointX?: number;
+            landingPointY?: number;
         } = {};
         if (title !== undefined) updateData.title = title;
         if (description !== undefined) updateData.description = description;
+        if (position !== undefined) {
+            updateData.landingPointX = position.X;
+            updateData.landingPointY = position.Y;
+        }
 
         // Update the utility
         const updatedUtility = await prisma.utility.update({

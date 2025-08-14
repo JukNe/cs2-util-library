@@ -58,6 +58,15 @@ const MapViewerInner = (props: MapViewerProps) => {
     const [isAddingLandingPoint, setIsAddingLandingPoint] = useState(false)
     const [isAddingThrowingPointLoading, setIsAddingThrowingPointLoading] = useState(false)
     const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 })
+
+    // Drag and drop state for landing points
+    const [isDraggingLP, setIsDraggingLP] = useState(false)
+    const [draggedLP, setDraggedLP] = useState<TUtilityLandingPoint | null>(null)
+    const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+    const [isSavingPosition, setIsSavingPosition] = useState(false)
+    const [isDragPending, setIsDragPending] = useState(false)
+    const [dragStartTimeout, setDragStartTimeout] = useState<NodeJS.Timeout | null>(null)
+
     const { utilityFilter } = useContext(UtilityFilterContext)
     const utilityViewerRef = useRef<UtilityViewerRef>(null)
 
@@ -429,6 +438,12 @@ const MapViewerInner = (props: MapViewerProps) => {
         // Update cursor position for custom cursor
         setCursorPosition({ x: e.clientX, y: e.clientY });
 
+        // Handle landing point dragging (only when actually dragging, not pending)
+        if (isDraggingLP) {
+            handleLPDragMove(e);
+            return;
+        }
+
         // Handle dragging for zoom
         if (isDragging) {
             setPan({
@@ -438,12 +453,24 @@ const MapViewerInner = (props: MapViewerProps) => {
         }
     };
 
-    const handleMouseUp = () => {
+    const handleMouseUp = (e: React.MouseEvent) => {
+        // Handle landing point drag end
+        if (isDraggingLP) {
+            handleLPDragEnd(e);
+            return;
+        }
+
         setIsDragging(false);
     };
 
     const handleLPClick = (data: TUtilityLandingPoint, e: React.MouseEvent) => {
         e.stopPropagation();
+
+        // If we're actually dragging, don't handle the click
+        if (isDraggingLP) {
+            return;
+        }
+
         // Toggle selection: if clicking the same landing point, deselect it
         if (selectedLP === data) {
             setSelectedLP(undefined);
@@ -727,6 +754,128 @@ const MapViewerInner = (props: MapViewerProps) => {
         setIsLPModalMinimized(!isLPModalMinimized);
     };
 
+    // Drag and drop handlers for landing points
+    const handleLPMouseDown = (lp: TUtilityLandingPoint, e: React.MouseEvent) => {
+        e.stopPropagation();
+
+        // Don't start drag if we're in edit mode or adding utilities
+        if (isEditingDescription || selectedNade || isAddingThrowingPoint) {
+            return;
+        }
+
+        // Set drag pending state and start timeout
+        setIsDragPending(true);
+        setDraggedLP(lp);
+
+        // Start a 1.5 second timeout before actual dragging begins
+        const timeout = setTimeout(() => {
+            setIsDraggingLP(true);
+            setIsDragPending(false);
+        }, 1500);
+
+        setDragStartTimeout(timeout);
+
+        // Prevent text selection during drag
+        e.preventDefault();
+    };
+
+    const handleLPDragMove = (e: React.MouseEvent) => {
+        if (!isDraggingLP || !draggedLP) return;
+
+        const img = document.getElementById('map-image') as HTMLImageElement;
+        if (!img) return;
+
+        const imgRect = img.getBoundingClientRect();
+
+        // Calculate mouse position relative to the image, accounting for zoom and pan
+        const mouseX = (e.clientX - imgRect.left - pan.x) / zoom;
+        const mouseY = (e.clientY - imgRect.top - pan.y) / zoom;
+
+        // Convert to percentages
+        const newX = Math.max(0, Math.min(100, (mouseX / imgRect.width) * 100));
+        const newY = Math.max(0, Math.min(100, (mouseY / imgRect.height) * 100));
+
+
+
+        // Update the dragged landing point position in local state
+        setUtility(prev => prev.map(item =>
+            item.id === draggedLP.id
+                ? { ...item, position: { X: newX, Y: newY } }
+                : item
+        ));
+
+        // Also update the draggedLP reference to the new position
+        setDraggedLP(prev => prev ? { ...prev, position: { X: newX, Y: newY } } : null);
+    };
+
+    const handleLPDragEnd = async (e: React.MouseEvent) => {
+        // Clear any pending drag timeout
+        if (dragStartTimeout) {
+            clearTimeout(dragStartTimeout);
+            setDragStartTimeout(null);
+        }
+
+        // If we're still in pending state, just cancel the drag and allow click
+        if (isDragPending) {
+            setIsDragPending(false);
+            setDraggedLP(null);
+            // Don't return here - let the click event proceed
+        }
+
+        // If we're not actually dragging, do nothing
+        if (!isDraggingLP || !draggedLP) return;
+
+        setIsSavingPosition(true);
+
+        try {
+            // Get the current position from the utility state
+            const currentUtility = utility.find(item => item.id === draggedLP.id);
+            if (!currentUtility) {
+                throw new Error('Utility not found in state');
+            }
+
+            // Save the new position to the database
+            const response = await fetch(`/api/utilities/${draggedLP.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    position: {
+                        X: currentUtility.position.X,
+                        Y: currentUtility.position.Y
+                    }
+                }),
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update position');
+            }
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to update position');
+            }
+
+            // Position saved successfully
+            console.log('Landing point position updated successfully');
+
+        } catch (error) {
+            console.error('Error updating landing point position:', error);
+            alert('Failed to save position. Please try again.');
+
+            // Revert the position change on error
+            await refreshUtilities();
+        } finally {
+            setIsSavingPosition(false);
+            setIsDraggingLP(false);
+            setIsDragPending(false);
+            setDraggedLP(null);
+            setDragOffset({ x: 0, y: 0 });
+        }
+    };
+
     const handleEditClick = () => {
         if (selectedTP) {
             setIsEditingDescription(true);
@@ -869,6 +1018,11 @@ const MapViewerInner = (props: MapViewerProps) => {
     };
 
     const handleMapClick = (e: React.MouseEvent) => {
+        // Don't handle map clicks if we're dragging a landing point or pending drag
+        if (isDraggingLP || isDragPending) {
+            return;
+        }
+
         // Check if the click target is within the dropdown area
         const target = e.target as HTMLElement;
         const dropdownArea = target.closest('.add-nade-dropdown');
@@ -910,13 +1064,21 @@ const MapViewerInner = (props: MapViewerProps) => {
                 img.style.cursor = 'none'
                 // Remove custom cursor classes
                 img.classList.remove('custom-cursor', 'custom-cursor-smoke', 'custom-cursor-flash', 'custom-cursor-molotov', 'custom-cursor-he');
+            } else if (isDraggingLP) {
+                img.style.cursor = 'grabbing'
+                // Remove custom cursor classes
+                img.classList.remove('custom-cursor', 'custom-cursor-smoke', 'custom-cursor-flash', 'custom-cursor-molotov', 'custom-cursor-he');
+            } else if (isDragPending) {
+                img.style.cursor = 'wait'
+                // Remove custom cursor classes
+                img.classList.remove('custom-cursor', 'custom-cursor-smoke', 'custom-cursor-flash', 'custom-cursor-molotov', 'custom-cursor-he');
             } else {
                 img.style.cursor = zoom > 1 ? 'grab' : 'auto'
                 // Remove custom cursor classes
                 img.classList.remove('custom-cursor', 'custom-cursor-smoke', 'custom-cursor-flash', 'custom-cursor-molotov', 'custom-cursor-he');
             }
         }
-    }, [selectedNade, zoom, isAddingThrowingPoint, isDropdownOpen])
+    }, [selectedNade, zoom, isAddingThrowingPoint, isDraggingLP, isDragPending, isDropdownOpen])
 
     // Handle Escape key to cancel operations
     useEffect(() => {
@@ -931,6 +1093,19 @@ const MapViewerInner = (props: MapViewerProps) => {
                 if (isAddingThrowingPoint) {
                     setIsAddingThrowingPoint(false);
                 }
+                // Cancel landing point dragging
+                if (isDraggingLP || isDragPending) {
+                    if (dragStartTimeout) {
+                        clearTimeout(dragStartTimeout);
+                        setDragStartTimeout(null);
+                    }
+                    setIsDraggingLP(false);
+                    setIsDragPending(false);
+                    setDraggedLP(null);
+                    setDragOffset({ x: 0, y: 0 });
+                    // Refresh utilities to revert position changes
+                    refreshUtilities();
+                }
                 // Close dropdown if open
                 if (isDropdownOpen) {
                     setIsDropdownOpen(false);
@@ -942,7 +1117,7 @@ const MapViewerInner = (props: MapViewerProps) => {
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, [selectedNade, isAddingThrowingPoint, isDropdownOpen]);
+    }, [selectedNade, isAddingThrowingPoint, isDraggingLP, isDropdownOpen, refreshUtilities]);
 
     return (
         <>
@@ -1612,7 +1787,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                     id='map-overview'
                     className="map-overview"
                     style={{
-                        cursor: isDragging ? 'grabbing' : (zoom > 1 ? 'grab' : 'auto'),
+                        cursor: isDraggingLP ? 'grabbing' : (isDragging ? 'grabbing' : (zoom > 1 ? 'grab' : 'auto')),
                         transition: 'padding-left 0.3s ease'
                     }}
                 >
@@ -1633,6 +1808,13 @@ const MapViewerInner = (props: MapViewerProps) => {
                     {isAddingThrowingPointLoading && (
                         <div className="loading-overlay">
                             <div className="loading-spinner">Adding throwing point...</div>
+                        </div>
+                    )}
+
+                    {/* Loading indicator for saving position */}
+                    {isSavingPosition && (
+                        <div className="loading-overlay">
+                            <div className="loading-spinner">Saving position...</div>
                         </div>
                     )}
                     <div
@@ -1669,18 +1851,31 @@ const MapViewerInner = (props: MapViewerProps) => {
                                 return (
                                     <div key={item.id || `${item.position.X}-${item.position.Y}`}>
                                         <button
-                                            className={`utility-lp-button ${isSelected ? 'selected' : ''}`}
+                                            className={`utility-lp-button ${isSelected ? 'selected' : ''} ${isDraggingLP && draggedLP === item ? 'dragging' : ''} ${isDragPending && draggedLP === item ? 'pending-drag' : ''}`}
                                             onClick={(e) => handleLPClick(item, e)}
+                                            onMouseDown={(e) => handleLPMouseDown(item, e)}
+                                            onMouseUp={(e) => handleLPDragEnd(e)}
                                             onMouseEnter={(e) => handleLPHover(item, e)}
-                                            onMouseLeave={handleLPLeave}
+                                            onMouseLeave={(e) => {
+                                                handleLPLeave();
+                                                if (isDragPending) {
+                                                    if (dragStartTimeout) {
+                                                        clearTimeout(dragStartTimeout);
+                                                        setDragStartTimeout(null);
+                                                    }
+                                                    setIsDragPending(false);
+                                                    setDraggedLP(null);
+                                                }
+                                            }}
                                             style={{
                                                 left: `${item.position.X}%`,
                                                 top: `${item.position.Y}%`,
                                                 backgroundImage: `url(${getUtilityIconSrc(item.utilityType)})`,
-                                                transform: `translate(-50%, -50%) scale(${1 / zoom})`
+                                                transform: `translate(-50%, -50%) scale(${1 / zoom})`,
+                                                zIndex: isDraggingLP && draggedLP === item ? 1000 : 'auto'
                                             }}
                                             key={item.position.X.toString() + item.position.Y.toString()}
-                                            title={`${item.utilityType} (${item.team})`}
+                                            title={`${item.utilityType} (${item.team}) - Click to open, hold for 1.5s to drag`}
                                         >
                                             <div className="utility-info">
                                                 <span className="utility-count">{item.throwingPoints.length}</span>
