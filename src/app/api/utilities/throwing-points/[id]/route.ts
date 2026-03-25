@@ -9,7 +9,7 @@ export async function PATCH(
 ) {
     try {
         const body = await request.json();
-        const { title, description } = body;
+        const { title, description, position } = body;
         const { id: throwingPointId } = await params;
 
         if (!throwingPointId) {
@@ -56,9 +56,15 @@ export async function PATCH(
         const updateData: {
             title?: string;
             description?: string | null;
+            positionX?: number;
+            positionY?: number;
         } = {};
         if (title !== undefined) updateData.title = title;
         if (description !== undefined) updateData.description = description;
+        if (position !== undefined) {
+            updateData.positionX = position.X;
+            updateData.positionY = position.Y;
+        }
 
         // Update the throwing point
         const updatedThrowingPoint = await prisma.throwingPoint.update({

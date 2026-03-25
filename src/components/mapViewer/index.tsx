@@ -67,6 +67,14 @@ const MapViewerInner = (props: MapViewerProps) => {
     const [isDragPending, setIsDragPending] = useState(false)
     const [dragStartTimeout, setDragStartTimeout] = useState<NodeJS.Timeout | null>(null)
 
+    // Drag and drop state for throwing points
+    const [isDraggingTP, setIsDraggingTP] = useState(false)
+    const [draggedTP, setDraggedTP] = useState<TUtilityThrowingPoint | null>(null)
+    const [isSavingTPPosition, setIsSavingTPPosition] = useState(false)
+    const [isTPDragPending, setIsTPDragPending] = useState(false)
+    const [tpDragStartTimeout, setTPDragStartTimeout] = useState<NodeJS.Timeout | null>(null)
+    const [draggedTPAssociatedLPId, setDraggedTPAssociatedLPId] = useState<string | null>(null)
+
     const { utilityFilter } = useContext(UtilityFilterContext)
     const utilityViewerRef = useRef<UtilityViewerRef>(null)
 
@@ -444,6 +452,12 @@ const MapViewerInner = (props: MapViewerProps) => {
             return;
         }
 
+        // Handle throwing point dragging (only when actually dragging, not pending)
+        if (isDraggingTP) {
+            handleTPDragMove(e);
+            return;
+        }
+
         // Handle dragging for zoom
         if (isDragging) {
             setPan({
@@ -460,6 +474,12 @@ const MapViewerInner = (props: MapViewerProps) => {
             return;
         }
 
+        // Handle throwing point drag end
+        if (isDraggingTP) {
+            handleTPDragEnd(e);
+            return;
+        }
+
         setIsDragging(false);
     };
 
@@ -467,7 +487,7 @@ const MapViewerInner = (props: MapViewerProps) => {
         e.stopPropagation();
 
         // If we're actually dragging, don't handle the click
-        if (isDraggingLP) {
+        if (isDraggingLP || isDraggingTP || isTPDragPending) {
             return;
         }
 
@@ -488,6 +508,8 @@ const MapViewerInner = (props: MapViewerProps) => {
     const handleAddThrowingPointClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         setIsAddingThrowingPoint(prev => !prev);
+        // Minimize the LP modal when adding throwing points
+        setIsLPModalMinimized(true);
     };
 
 
@@ -595,6 +617,12 @@ const MapViewerInner = (props: MapViewerProps) => {
 
     const handleTPClick = (data: TUtilityThrowingPoint, e: React.MouseEvent) => {
         e.stopPropagation();
+
+        // If we're actually dragging, don't handle the click
+        if (isDraggingTP) {
+            return;
+        }
+
         setSelectedTP(data);
         setIsModalOpen(true);
     };
@@ -876,6 +904,159 @@ const MapViewerInner = (props: MapViewerProps) => {
         }
     };
 
+    // Drag and drop handlers for throwing points
+    const handleTPMouseDown = (tp: TUtilityThrowingPoint, e: React.MouseEvent) => {
+        e.stopPropagation();
+
+        // Don't start drag if we're in edit mode or adding new utilities
+        if (isEditingDescription || selectedNade) {
+            return;
+        }
+
+        // Find the associated landing point for this throwing point
+        const associatedLP = utility.find(item =>
+            item.throwingPoints.some(tpItem => tpItem.id === tp.id)
+        );
+
+        // Store the associated LP ID for maintaining selection during drag
+        if (associatedLP && associatedLP.id) {
+            setDraggedTPAssociatedLPId(associatedLP.id);
+        }
+
+        // Ensure the associated landing point is selected when starting to drag
+        if (associatedLP && selectedLP !== associatedLP) {
+            setSelectedLP(associatedLP);
+            setIsLPModalOpen(true);
+        }
+
+        // Set drag pending state and start timeout
+        setIsTPDragPending(true);
+        setDraggedTP(tp);
+
+        // Start a 1.5 second timeout before actual dragging begins
+        const timeout = setTimeout(() => {
+            setIsDraggingTP(true);
+            setIsTPDragPending(false);
+        }, 1500);
+
+        setTPDragStartTimeout(timeout);
+
+        // Prevent text selection during drag
+        e.preventDefault();
+    };
+
+    const handleTPDragMove = (e: React.MouseEvent) => {
+        if (!isDraggingTP || !draggedTP) return;
+
+        const img = document.getElementById('map-image') as HTMLImageElement;
+        if (!img) return;
+
+        const imgRect = img.getBoundingClientRect();
+
+        // Calculate mouse position relative to the image, accounting for zoom and pan
+        const mouseX = (e.clientX - imgRect.left - pan.x) / zoom;
+        const mouseY = (e.clientY - imgRect.top - pan.y) / zoom;
+
+        // Convert to percentages
+        const newX = Math.max(0, Math.min(100, (mouseX / imgRect.width) * 100));
+        const newY = Math.max(0, Math.min(100, (mouseY / imgRect.height) * 100));
+
+        // Update the dragged throwing point position in local state
+        setUtility(prev => prev.map(item => ({
+            ...item,
+            throwingPoints: item.throwingPoints.map(tp =>
+                tp.id === draggedTP.id
+                    ? { ...tp, position: { X: newX, Y: newY } }
+                    : tp
+            )
+        })));
+
+        // Also update the draggedTP reference to the new position
+        setDraggedTP(prev => prev ? { ...prev, position: { X: newX, Y: newY } } : null);
+
+        // Ensure the selectedLP stays updated with the latest utility data using the stored LP ID
+        if (draggedTPAssociatedLPId) {
+            const updatedSelectedLP = utility.find(item => item.id === draggedTPAssociatedLPId);
+            if (updatedSelectedLP && selectedLP?.id !== draggedTPAssociatedLPId) {
+                setSelectedLP(updatedSelectedLP);
+                setIsLPModalOpen(true);
+            }
+        }
+    };
+
+    const handleTPDragEnd = async (e: React.MouseEvent) => {
+        // Clear any pending drag timeout
+        if (tpDragStartTimeout) {
+            clearTimeout(tpDragStartTimeout);
+            setTPDragStartTimeout(null);
+        }
+
+        // If we're still in pending state, just cancel the drag and allow click
+        if (isTPDragPending) {
+            setIsTPDragPending(false);
+            setDraggedTP(null);
+            setDraggedTPAssociatedLPId(null);
+            // Don't return here - let the click event proceed
+        }
+
+        // If we're not actually dragging, do nothing
+        if (!isDraggingTP || !draggedTP) return;
+
+        setIsSavingTPPosition(true);
+
+        try {
+            // Get the current position from the utility state
+            const currentUtility = utility.find(item =>
+                item.throwingPoints.some(tp => tp.id === draggedTP.id)
+            );
+            if (!currentUtility) {
+                throw new Error('Utility not found in state');
+            }
+
+            const currentTP = currentUtility.throwingPoints.find(tp => tp.id === draggedTP.id);
+            if (!currentTP) {
+                throw new Error('Throwing point not found in state');
+            }
+
+            // Save the new position to the database
+            const response = await fetch(`/api/utilities/throwing-points/${draggedTP.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    position: {
+                        X: currentTP.position.X,
+                        Y: currentTP.position.Y
+                    }
+                }),
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update position');
+            }
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to update position');
+            }
+
+            console.log('Throwing point position updated successfully');
+
+        } catch (error) {
+            console.error('Error updating throwing point position:', error);
+            alert('Failed to save position. Please try again.');
+            await refreshUtilities();
+        } finally {
+            setIsSavingTPPosition(false);
+            setIsDraggingTP(false);
+            setIsTPDragPending(false);
+            setDraggedTP(null);
+            setDraggedTPAssociatedLPId(null);
+        }
+    };
+
     const handleEditClick = () => {
         if (selectedTP) {
             setIsEditingDescription(true);
@@ -1019,7 +1200,7 @@ const MapViewerInner = (props: MapViewerProps) => {
 
     const handleMapClick = (e: React.MouseEvent) => {
         // Don't handle map clicks if we're dragging a landing point or pending drag
-        if (isDraggingLP || isDragPending) {
+        if (isDraggingLP || isDragPending || isDraggingTP || isTPDragPending) {
             return;
         }
 
@@ -1064,11 +1245,11 @@ const MapViewerInner = (props: MapViewerProps) => {
                 img.style.cursor = 'none'
                 // Remove custom cursor classes
                 img.classList.remove('custom-cursor', 'custom-cursor-smoke', 'custom-cursor-flash', 'custom-cursor-molotov', 'custom-cursor-he');
-            } else if (isDraggingLP) {
+            } else if (isDraggingLP || isDraggingTP) {
                 img.style.cursor = 'grabbing'
                 // Remove custom cursor classes
                 img.classList.remove('custom-cursor', 'custom-cursor-smoke', 'custom-cursor-flash', 'custom-cursor-molotov', 'custom-cursor-he');
-            } else if (isDragPending) {
+            } else if (isDragPending || isTPDragPending) {
                 img.style.cursor = 'wait'
                 // Remove custom cursor classes
                 img.classList.remove('custom-cursor', 'custom-cursor-smoke', 'custom-cursor-flash', 'custom-cursor-molotov', 'custom-cursor-he');
@@ -1078,7 +1259,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                 img.classList.remove('custom-cursor', 'custom-cursor-smoke', 'custom-cursor-flash', 'custom-cursor-molotov', 'custom-cursor-he');
             }
         }
-    }, [selectedNade, zoom, isAddingThrowingPoint, isDraggingLP, isDragPending, isDropdownOpen])
+    }, [selectedNade, zoom, isAddingThrowingPoint, isDraggingLP, isDragPending, isDraggingTP, isTPDragPending, isDropdownOpen])
 
     // Handle Escape key to cancel operations
     useEffect(() => {
@@ -1103,6 +1284,19 @@ const MapViewerInner = (props: MapViewerProps) => {
                     setIsDragPending(false);
                     setDraggedLP(null);
                     setDragOffset({ x: 0, y: 0 });
+                    // Refresh utilities to revert position changes
+                    refreshUtilities();
+                }
+                // Cancel throwing point dragging
+                if (isDraggingTP || isTPDragPending) {
+                    if (tpDragStartTimeout) {
+                        clearTimeout(tpDragStartTimeout);
+                        setTPDragStartTimeout(null);
+                    }
+                    setIsDraggingTP(false);
+                    setIsTPDragPending(false);
+                    setDraggedTP(null);
+                    setDraggedTPAssociatedLPId(null);
                     // Refresh utilities to revert position changes
                     refreshUtilities();
                 }
@@ -1817,6 +2011,13 @@ const MapViewerInner = (props: MapViewerProps) => {
                             <div className="loading-spinner">Saving position...</div>
                         </div>
                     )}
+
+                    {/* Loading indicator for saving throwing point position */}
+                    {isSavingTPPosition && (
+                        <div className="loading-overlay">
+                            <div className="loading-spinner">Saving throwing point position...</div>
+                        </div>
+                    )}
                     <div
                         className='map-image-container'
                         style={{
@@ -1920,15 +2121,30 @@ const MapViewerInner = (props: MapViewerProps) => {
                                                 {item.throwingPoints.map((tp) => (
                                                     <button
                                                         key={tp.id || `${tp.position.X}-${tp.position.Y}`}
-                                                        className={'utility-tp-button'}
+                                                        className={`utility-tp-button ${isDraggingTP && draggedTP === tp ? 'dragging' : ''} ${isTPDragPending && draggedTP === tp ? 'pending-drag' : ''}`}
                                                         onClick={(e) => handleTPClick(tp, e)}
+                                                        onMouseDown={(e) => handleTPMouseDown(tp, e)}
+                                                        onMouseUp={(e) => handleTPDragEnd(e)}
                                                         onMouseEnter={(e) => handleTPHover(tp, e)}
-                                                        onMouseLeave={handleTPLeave}
+                                                        onMouseLeave={(e) => {
+                                                            handleTPLeave();
+                                                            if (isTPDragPending) {
+                                                                if (tpDragStartTimeout) {
+                                                                    clearTimeout(tpDragStartTimeout);
+                                                                    setTPDragStartTimeout(null);
+                                                                }
+                                                                setIsTPDragPending(false);
+                                                                setDraggedTP(null);
+                                                                setDraggedTPAssociatedLPId(null);
+                                                            }
+                                                        }}
                                                         style={{
                                                             left: `${tp.position.X}%`,
                                                             top: `${tp.position.Y}%`,
-                                                            transform: `translate(-50%, -50%) scale(${1 / zoom})`
+                                                            transform: `translate(-50%, -50%) scale(${1 / zoom})`,
+                                                            zIndex: isDraggingTP && draggedTP === tp ? 1000 : 'auto'
                                                         }}
+                                                        title="Click to open, hold for 1.5s to drag"
                                                     />
                                                 ))}
                                             </>
