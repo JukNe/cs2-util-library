@@ -76,10 +76,9 @@ export async function POST(request: NextRequest) {
 
     } catch (error) {
         console.error('Signin error:', error);
-        return NextResponse.json({
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error',
-            details: error
-        }, { status: 500 });
+        return NextResponse.json(
+            { success: false, error: 'Invalid email or password' },
+            { status: 401 }
+        );
     }
 }

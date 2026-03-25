@@ -44,7 +44,7 @@ const LoginForm = () => {
 
             if (!res.success) {
                 console.error('Signin error:', res.error);
-                setErrorMessage(res.error || "Invalid email or password.");
+                setErrorMessage('Invalid email or password.');
                 setLoading(false);
                 return;
             }
