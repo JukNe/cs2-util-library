@@ -19,6 +19,29 @@ interface MapViewerProps {
     data: TUtilityLandingPoint[];
 }
 
+/**
+ * Convert a mouse event to map-image percentage coordinates (0–100).
+ * Uses getBoundingClientRect only — that rect already includes CSS scale/translate,
+ * so do not also divide by zoom or subtract pan (that double-applies the transform).
+ */
+function getMapPercentCoords(
+    e: { clientX: number; clientY: number },
+    img: HTMLImageElement
+): { X: number; Y: number } {
+    const imgRect = img.getBoundingClientRect();
+    if (imgRect.width <= 0 || imgRect.height <= 0) {
+        return { X: 0, Y: 0 };
+    }
+
+    const xPercent = ((e.clientX - imgRect.left) / imgRect.width) * 100;
+    const yPercent = ((e.clientY - imgRect.top) / imgRect.height) * 100;
+
+    return {
+        X: Math.max(0, Math.min(100, xPercent)),
+        Y: Math.max(0, Math.min(100, yPercent)),
+    };
+}
+
 // Inner component that uses the context
 const MapViewerInner = (props: MapViewerProps) => {
     const { mapName, data } = props;
@@ -268,14 +291,7 @@ const MapViewerInner = (props: MapViewerProps) => {
         // Set loading state
         setIsAddingLandingPoint(true);
 
-        // Calculate click position relative to the image, accounting for zoom and pan
-        const imgRect = img.getBoundingClientRect()
-        const clickX = (e.clientX - imgRect.left - pan.x) / zoom
-        const clickY = (e.clientY - imgRect.top - pan.y) / zoom
-
-        // Convert to percentages for responsive positioning
-        const xPercent = (clickX / imgRect.width) * 100
-        const yPercent = (clickY / imgRect.height) * 100
+        const position = getMapPercentCoords(e, img)
 
         try {
             // Save to database
@@ -288,10 +304,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                     mapName,
                     utilityType: selectedNade,
                     team: selectedTeam,
-                    position: {
-                        X: xPercent,
-                        Y: yPercent
-                    }
+                    position
                 }),
                 credentials: 'include'
             });
@@ -328,14 +341,7 @@ const MapViewerInner = (props: MapViewerProps) => {
         // Set loading state
         setIsAddingThrowingPointLoading(true);
 
-        // Calculate click position relative to the image, accounting for zoom and pan
-        const imgRect = img.getBoundingClientRect()
-        const clickX = (e.clientX - imgRect.left - pan.x) / zoom
-        const clickY = (e.clientY - imgRect.top - pan.y) / zoom
-
-        // Convert to percentages for responsive positioning
-        const xPercent = (clickX / imgRect.width) * 100
-        const yPercent = (clickY / imgRect.height) * 100
+        const position = getMapPercentCoords(e, img)
 
         try {
             // Save to database
@@ -346,10 +352,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                 },
                 body: JSON.stringify({
                     utilityId: selectedLP.id,
-                    position: {
-                        X: xPercent,
-                        Y: yPercent
-                    },
+                    position,
                     title: `Throwing Point ${selectedLP.throwingPoints.length + 1}`,
                     description: ''
                 }),
@@ -814,27 +817,17 @@ const MapViewerInner = (props: MapViewerProps) => {
         const img = document.getElementById('map-image') as HTMLImageElement;
         if (!img) return;
 
-        const imgRect = img.getBoundingClientRect();
-
-        // Calculate mouse position relative to the image, accounting for zoom and pan
-        const mouseX = (e.clientX - imgRect.left - pan.x) / zoom;
-        const mouseY = (e.clientY - imgRect.top - pan.y) / zoom;
-
-        // Convert to percentages
-        const newX = Math.max(0, Math.min(100, (mouseX / imgRect.width) * 100));
-        const newY = Math.max(0, Math.min(100, (mouseY / imgRect.height) * 100));
-
-
+        const position = getMapPercentCoords(e, img);
 
         // Update the dragged landing point position in local state
         setUtility(prev => prev.map(item =>
             item.id === draggedLP.id
-                ? { ...item, position: { X: newX, Y: newY } }
+                ? { ...item, position }
                 : item
         ));
 
         // Also update the draggedLP reference to the new position
-        setDraggedLP(prev => prev ? { ...prev, position: { X: newX, Y: newY } } : null);
+        setDraggedLP(prev => prev ? { ...prev, position } : null);
     };
 
     const handleLPDragEnd = async () => {
@@ -951,28 +944,20 @@ const MapViewerInner = (props: MapViewerProps) => {
         const img = document.getElementById('map-image') as HTMLImageElement;
         if (!img) return;
 
-        const imgRect = img.getBoundingClientRect();
-
-        // Calculate mouse position relative to the image, accounting for zoom and pan
-        const mouseX = (e.clientX - imgRect.left - pan.x) / zoom;
-        const mouseY = (e.clientY - imgRect.top - pan.y) / zoom;
-
-        // Convert to percentages
-        const newX = Math.max(0, Math.min(100, (mouseX / imgRect.width) * 100));
-        const newY = Math.max(0, Math.min(100, (mouseY / imgRect.height) * 100));
+        const position = getMapPercentCoords(e, img);
 
         // Update the dragged throwing point position in local state
         setUtility(prev => prev.map(item => ({
             ...item,
             throwingPoints: item.throwingPoints.map(tp =>
                 tp.id === draggedTP.id
-                    ? { ...tp, position: { X: newX, Y: newY } }
+                    ? { ...tp, position }
                     : tp
             )
         })));
 
         // Also update the draggedTP reference to the new position
-        setDraggedTP(prev => prev ? { ...prev, position: { X: newX, Y: newY } } : null);
+        setDraggedTP(prev => prev ? { ...prev, position } : null);
 
         // Ensure the selectedLP stays updated with the latest utility data using the stored LP ID
         if (draggedTPAssociatedLPId) {

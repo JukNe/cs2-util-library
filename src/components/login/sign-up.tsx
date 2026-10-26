@@ -57,7 +57,17 @@ export const SignUp = ({ onBackToLogin }: SignUpProps) => {
             const res = await response.json();
             if (res.error || !res.success) {
                 console.error('Signup error details:', res.error);
-                setFormError(res.error ?? "An unknown error occurred.");
+                // Prefer known client-safe messages; never surface Prisma/internal details
+                const safeMessages = new Set([
+                    'User already exists',
+                    'Unable to create account. Please try again.',
+                    'All fields are required',
+                ]);
+                setFormError(
+                    typeof res.error === 'string' && safeMessages.has(res.error)
+                        ? res.error
+                        : 'Unable to create account. Please try again.'
+                );
             } else {
 
                 // Show success message and redirect to home page
@@ -69,7 +79,7 @@ export const SignUp = ({ onBackToLogin }: SignUpProps) => {
 
                 // Force a page reload to ensure the session is properly recognized
                 setTimeout(() => {
-                    window.location.href = '/';
+                    window.location.assign('/');
                 }, 1500); // Redirect after 1.5 seconds
             }
         } catch (error) {
