@@ -1,4 +1,5 @@
 import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 const globalForPrisma = globalThis as unknown as {
     prisma: PrismaClient | undefined;
@@ -8,36 +9,55 @@ function isAccelerateUrl(url: string): boolean {
     return url.startsWith("prisma://") || url.startsWith("prisma+postgres://");
 }
 
-function resolveAccelerateUrl(): string {
-    const accelerateUrl = process.env.PRISMA_DATABASE_URL;
-    const fallback = process.env.DATABASE_URL;
+function resolveAccelerateUrl(): string | undefined {
+    const candidates = [process.env.PRISMA_DATABASE_URL, process.env.DATABASE_URL];
+    return candidates.find((url): url is string => !!url && isAccelerateUrl(url));
+}
 
-    const url =
-        (accelerateUrl && isAccelerateUrl(accelerateUrl) ? accelerateUrl : undefined) ||
-        (fallback && isAccelerateUrl(fallback) ? fallback : undefined) ||
-        accelerateUrl ||
-        fallback;
+function resolveDirectUrl(): string | undefined {
+    const candidates = [
+        process.env.POSTGRES_URL,
+        process.env.DATABASE_URL,
+        process.env.POSTGRES_PRISMA_URL,
+    ];
+    return candidates.find((url): url is string => !!url && !isAccelerateUrl(url));
+}
 
-    if (!url || !isAccelerateUrl(url)) {
-        throw new Error(
-            "Missing Prisma Accelerate URL. Set PRISMA_DATABASE_URL (prisma:// or prisma+postgres://)."
-        );
+function createPrismaClient(): PrismaClient {
+    const accelerateUrl = resolveAccelerateUrl();
+    if (accelerateUrl) {
+        return new PrismaClient({ accelerateUrl });
     }
 
-    return url;
+    const directUrl = resolveDirectUrl();
+    if (directUrl) {
+        // Prisma 7 requires a driver adapter for direct Postgres connections.
+        const adapter = new PrismaPg({ connectionString: directUrl });
+        return new PrismaClient({ adapter });
+    }
+
+    throw new Error(
+        "Missing database connection string. Set POSTGRES_URL / DATABASE_URL (postgres://) or PRISMA_DATABASE_URL (prisma://)."
+    );
 }
 
-function createPrismaClient() {
-    // Prisma 7 + Accelerate: pass accelerateUrl to the constructor (no $extends needed for typing).
-    return new PrismaClient({
-        accelerateUrl: resolveAccelerateUrl(),
-    });
+function getPrismaClient(): PrismaClient {
+    if (!globalForPrisma.prisma) {
+        globalForPrisma.prisma = createPrismaClient();
+    }
+    return globalForPrisma.prisma;
 }
 
-const prisma = globalForPrisma.prisma ?? createPrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = prisma;
-}
+/**
+ * Lazy proxy so importing this module during `next build` does not require
+ * env vars until Prisma is actually used.
+ */
+const prisma = new Proxy({} as PrismaClient, {
+    get(_target, prop, receiver) {
+        const client = getPrismaClient();
+        const value = Reflect.get(client, prop, receiver);
+        return typeof value === "function" ? value.bind(client) : value;
+    },
+});
 
 export default prisma;
