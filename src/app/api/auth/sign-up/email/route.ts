@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { sendVerificationEmail } from '@/lib/email';
 import { randomUUID } from 'crypto';
+import { Prisma } from '@/generated/prisma/client';
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
         const { name, email, password } = body;
+
+        if (!name || !email || !password) {
+            return NextResponse.json(
+                { success: false, error: 'All fields are required' },
+                { status: 400 }
+            );
+        }
 
         // Check if user already exists
         const existingUser = await prisma.user.findUnique({
@@ -21,7 +29,7 @@ export async function POST(request: NextRequest) {
             }, { status: 409 });
         }
 
-        // Hash the password
+        // Hash the password (bcryptjs — pure JS, works on Vercel serverless)
         const hashedPassword = await bcrypt.hash(password, 12);
 
         // Create user with hashed password
@@ -104,6 +112,17 @@ export async function POST(request: NextRequest) {
 
     } catch (error) {
         console.error('Signup error:', error);
+
+        if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === 'P2002'
+        ) {
+            return NextResponse.json(
+                { success: false, error: 'User already exists' },
+                { status: 409 }
+            );
+        }
+
         return NextResponse.json(
             { success: false, error: 'Unable to create account. Please try again.' },
             { status: 500 }

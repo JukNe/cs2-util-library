@@ -824,7 +824,7 @@
   resolved "https://registry.npmjs.org/@prisma/client-runtime-utils/-/client-runtime-utils-7.10.1.tgz"
   integrity sha512-AzoATVIgmO3lcZfM443+9SI7+cyLMW2+Psw4op8WQHpHvHCX//CKxv8fwhiL0yGWF8DjdQrFewxrZo5McBdB8g==
 
-"@prisma/client@^7.10.1":
+"@prisma/client@^7.10.1", "@prisma/client@>=4.16.1":
   version "7.10.1"
   resolved "https://registry.npmjs.org/@prisma/client/-/client-7.10.1.tgz"
   integrity sha512-5tgAbFGh//zVOC6WPNVgziOErJHYkUE+wmqCwbIyq6IrTXUYtv9y2iBFGh/Owo99Mx0+cr0j1FOrxkYBMuyhaQ==
@@ -893,6 +893,11 @@
     "@prisma/engines-version" "8.1.0-1.d1b3f377ca835d73fd50954a5e22128b9ebdd6b8"
     "@prisma/fetch-engine" "7.10.1"
     "@prisma/get-platform" "7.10.1"
+
+"@prisma/extension-accelerate@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.npmjs.org/@prisma/extension-accelerate/-/extension-accelerate-3.0.1.tgz"
+  integrity sha512-xc+kn4AjjTzS9jsdD1JWCebB09y0Aj+C8GjjG7oUm81PF9psvmJOw5rxpl7tOEBz/8hmuNX996XL28ys/OLxVA==
 
 "@prisma/fetch-engine@7.10.1":
   version "7.10.1"
@@ -1896,10 +1901,10 @@ bcrypt@^6.0.0:
     node-addon-api "^8.3.0"
     node-gyp-build "^4.8.4"
 
-bcryptjs@*, bcryptjs@^3.0.2:
-  version "3.0.2"
-  resolved "https://registry.npmjs.org/bcryptjs/-/bcryptjs-3.0.2.tgz"
-  integrity sha512-k38b3XOZKv60C4E2hVsXTolJWfkGRMbILBIe2IBITXciy5bOsTKot5kDrf3ZfufQtQOUN5mXceUEpU1rTl9Uog==
+bcryptjs@*, bcryptjs@^3.0.3:
+  version "3.0.3"
+  resolved "https://registry.npmjs.org/bcryptjs/-/bcryptjs-3.0.3.tgz"
+  integrity sha512-GlF5wPWnSa/X5LKM1o0wz0suXIINz1iHRLvTS+sLyi7XPbe5ycmYI3DlZqVGZZtDgl4DmasFg7gOB3JYbphV5g==
 
 better-result@^2.7.0:
   version "2.10.0"

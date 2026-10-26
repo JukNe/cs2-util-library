@@ -1,8 +1,11 @@
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { withAccelerate } from "@prisma/extension-accelerate";
+
+type AppPrismaClient = PrismaClient;
 
 const globalForPrisma = globalThis as unknown as {
-    prisma: PrismaClient | undefined;
+    prisma: AppPrismaClient | undefined;
 };
 
 function isAccelerateUrl(url: string): boolean {
@@ -23,17 +26,19 @@ function resolveDirectUrl(): string | undefined {
     return candidates.find((url): url is string => !!url && !isAccelerateUrl(url));
 }
 
-function createPrismaClient(): PrismaClient {
-    const accelerateUrl = resolveAccelerateUrl();
-    if (accelerateUrl) {
-        return new PrismaClient({ accelerateUrl });
-    }
-
+function createPrismaClient(): AppPrismaClient {
+    // Prefer direct Postgres on Vercel/serverless — more reliable with Prisma 7 adapters.
     const directUrl = resolveDirectUrl();
     if (directUrl) {
-        // Prisma 7 requires a driver adapter for direct Postgres connections.
         const adapter = new PrismaPg({ connectionString: directUrl });
         return new PrismaClient({ adapter });
+    }
+
+    const accelerateUrl = resolveAccelerateUrl();
+    if (accelerateUrl) {
+        return new PrismaClient({
+            accelerateUrl,
+        }).$extends(withAccelerate()) as unknown as AppPrismaClient;
     }
 
     throw new Error(
@@ -41,7 +46,7 @@ function createPrismaClient(): PrismaClient {
     );
 }
 
-function getPrismaClient(): PrismaClient {
+function getPrismaClient(): AppPrismaClient {
     if (!globalForPrisma.prisma) {
         globalForPrisma.prisma = createPrismaClient();
     }
@@ -52,7 +57,7 @@ function getPrismaClient(): PrismaClient {
  * Lazy proxy so importing this module during `next build` does not require
  * env vars until Prisma is actually used.
  */
-const prisma = new Proxy({} as PrismaClient, {
+const prisma = new Proxy({} as AppPrismaClient, {
     get(_target, prop, receiver) {
         const client = getPrismaClient();
         const value = Reflect.get(client, prop, receiver);
