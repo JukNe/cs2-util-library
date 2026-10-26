@@ -62,7 +62,6 @@ const MapViewerInner = (props: MapViewerProps) => {
     // Drag and drop state for landing points
     const [isDraggingLP, setIsDraggingLP] = useState(false)
     const [draggedLP, setDraggedLP] = useState<TUtilityLandingPoint | null>(null)
-    const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
     const [isSavingPosition, setIsSavingPosition] = useState(false)
     const [isDragPending, setIsDragPending] = useState(false)
     const [dragStartTimeout, setDragStartTimeout] = useState<NodeJS.Timeout | null>(null)
@@ -91,6 +90,8 @@ const MapViewerInner = (props: MapViewerProps) => {
 
             return () => clearTimeout(timer);
         }
+    // Intentionally depend on specific tutorial fields; the whole object identity is unstable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tutorial.startTutorial/hasSeenTutorial
     }, [isClient, tutorial.hasSeenTutorial, tutorial.startTutorial]);
 
 
@@ -467,16 +468,16 @@ const MapViewerInner = (props: MapViewerProps) => {
         }
     };
 
-    const handleMouseUp = (e: React.MouseEvent) => {
+    const handleMouseUp = () => {
         // Handle landing point drag end
         if (isDraggingLP) {
-            handleLPDragEnd(e);
+            handleLPDragEnd();
             return;
         }
 
         // Handle throwing point drag end
         if (isDraggingTP) {
-            handleTPDragEnd(e);
+            handleTPDragEnd();
             return;
         }
 
@@ -836,7 +837,7 @@ const MapViewerInner = (props: MapViewerProps) => {
         setDraggedLP(prev => prev ? { ...prev, position: { X: newX, Y: newY } } : null);
     };
 
-    const handleLPDragEnd = async (e: React.MouseEvent) => {
+    const handleLPDragEnd = async () => {
         // Clear any pending drag timeout
         if (dragStartTimeout) {
             clearTimeout(dragStartTimeout);
@@ -900,7 +901,6 @@ const MapViewerInner = (props: MapViewerProps) => {
             setIsDraggingLP(false);
             setIsDragPending(false);
             setDraggedLP(null);
-            setDragOffset({ x: 0, y: 0 });
         }
     };
 
@@ -984,7 +984,7 @@ const MapViewerInner = (props: MapViewerProps) => {
         }
     };
 
-    const handleTPDragEnd = async (e: React.MouseEvent) => {
+    const handleTPDragEnd = async () => {
         // Clear any pending drag timeout
         if (tpDragStartTimeout) {
             clearTimeout(tpDragStartTimeout);
@@ -1283,7 +1283,6 @@ const MapViewerInner = (props: MapViewerProps) => {
                     setIsDraggingLP(false);
                     setIsDragPending(false);
                     setDraggedLP(null);
-                    setDragOffset({ x: 0, y: 0 });
                     // Refresh utilities to revert position changes
                     refreshUtilities();
                 }
@@ -1311,7 +1310,18 @@ const MapViewerInner = (props: MapViewerProps) => {
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, [selectedNade, isAddingThrowingPoint, isDraggingLP, isDropdownOpen, refreshUtilities]);
+    }, [
+        selectedNade,
+        isAddingThrowingPoint,
+        isDraggingLP,
+        isDragPending,
+        isDraggingTP,
+        isTPDragPending,
+        dragStartTimeout,
+        tpDragStartTimeout,
+        isDropdownOpen,
+        refreshUtilities,
+    ]);
 
     return (
         <>
@@ -2055,9 +2065,9 @@ const MapViewerInner = (props: MapViewerProps) => {
                                             className={`utility-lp-button ${isSelected ? 'selected' : ''} ${isDraggingLP && draggedLP === item ? 'dragging' : ''} ${isDragPending && draggedLP === item ? 'pending-drag' : ''}`}
                                             onClick={(e) => handleLPClick(item, e)}
                                             onMouseDown={(e) => handleLPMouseDown(item, e)}
-                                            onMouseUp={(e) => handleLPDragEnd(e)}
+                                            onMouseUp={() => handleLPDragEnd()}
                                             onMouseEnter={(e) => handleLPHover(item, e)}
-                                            onMouseLeave={(e) => {
+                                            onMouseLeave={() => {
                                                 handleLPLeave();
                                                 if (isDragPending) {
                                                     if (dragStartTimeout) {
@@ -2124,9 +2134,9 @@ const MapViewerInner = (props: MapViewerProps) => {
                                                         className={`utility-tp-button ${isDraggingTP && draggedTP === tp ? 'dragging' : ''} ${isTPDragPending && draggedTP === tp ? 'pending-drag' : ''}`}
                                                         onClick={(e) => handleTPClick(tp, e)}
                                                         onMouseDown={(e) => handleTPMouseDown(tp, e)}
-                                                        onMouseUp={(e) => handleTPDragEnd(e)}
+                                                        onMouseUp={() => handleTPDragEnd()}
                                                         onMouseEnter={(e) => handleTPHover(tp, e)}
-                                                        onMouseLeave={(e) => {
+                                                        onMouseLeave={() => {
                                                             handleTPLeave();
                                                             if (isTPDragPending) {
                                                                 if (tpDragStartTimeout) {

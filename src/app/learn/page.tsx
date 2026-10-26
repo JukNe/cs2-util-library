@@ -112,7 +112,7 @@ const LearnPage = () => {
             } else {
                 setThrowingPoints([]);
             }
-        } catch (error) {
+        } catch {
             setThrowingPoints([]);
         } finally {
             setIsLoading(false);
@@ -136,7 +136,7 @@ const LearnPage = () => {
                 setCurrentMedia([]);
                 setCurrentMediaIndex(0);
             }
-        } catch (error) {
+        } catch {
             setCurrentMedia([]);
             setCurrentMediaIndex(0);
         } finally {

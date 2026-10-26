@@ -298,7 +298,7 @@
         }
 
         // Override MediaUploader styles to fit within carousel
-        :global(.media-uploader) {
+        .media-uploader {
             max-width: none;
             margin: 0;
 

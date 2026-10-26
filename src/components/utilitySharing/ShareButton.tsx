@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { useUtilitySharing } from '@/hooks/useUtilitySharing';
 import { TUtilityLandingPoint } from '@/types/utilities';
@@ -13,17 +13,16 @@ interface ShareButtonProps {
     className?: string;
 }
 
+const subscribe = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 export const ShareButton = ({ mapName, utilities, className = '' }: ShareButtonProps) => {
     const { exportToClipboard, isExporting, error } = useUtilitySharing();
     const [showModal, setShowModal] = useState(false);
     const [description, setDescription] = useState('');
     const [copied, setCopied] = useState(false);
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-        return () => setMounted(false);
-    }, []);
+    const mounted = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
 
     const handleShare = async () => {
         if (utilities.length === 0) {

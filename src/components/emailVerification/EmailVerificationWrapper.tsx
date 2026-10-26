@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { EmailVerificationBanner } from './EmailVerificationBanner';
 import { VerificationPrompt } from './VerificationPrompt';
 import { useEmailVerification } from '@/hooks/useEmailVerification';
@@ -21,7 +21,6 @@ interface EmailVerificationWrapperProps {
 export const EmailVerificationWrapper = ({ session }: EmailVerificationWrapperProps) => {
     const { resendVerification } = useEmailVerification();
     const { limits, refreshLimits } = useUserLimits();
-    const [showLimitPrompt, setShowLimitPrompt] = useState(false);
 
     useEffect(() => {
         if (!session.user.emailVerified) {
@@ -39,15 +38,10 @@ export const EmailVerificationWrapper = ({ session }: EmailVerificationWrapperPr
         }
     };
 
-    // Show limit prompt if user has hit their limits
-    useEffect(() => {
-        if (!session.user.emailVerified && limits) {
-            const hasHitLimits = !limits.canCreateUtility || !limits.canCreateThrowingPoint;
-            setShowLimitPrompt(hasHitLimits);
-        } else {
-            setShowLimitPrompt(false);
-        }
-    }, [session.user.emailVerified, limits]);
+    const showLimitPrompt =
+        !session.user.emailVerified &&
+        !!limits &&
+        (!limits.canCreateUtility || !limits.canCreateThrowingPoint);
 
     // Only show banner if user is not verified
     if (!session.user.emailVerified) {
@@ -74,4 +68,4 @@ export const EmailVerificationWrapper = ({ session }: EmailVerificationWrapperPr
     }
 
     return null;
-}; 
+};

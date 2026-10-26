@@ -7,7 +7,7 @@
     "build": "next build",
     "clean": "rm -rf node_modules .next",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "postinstall": "prisma generate",
     "test": "jest",
     "test:watch": "jest --watch",

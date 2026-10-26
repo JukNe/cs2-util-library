@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { BsEnvelope, BsExclamationTriangle } from 'react-icons/bs';
+import { BsExclamationTriangle } from 'react-icons/bs';
 import Link from 'next/link';
-import { useEmailVerification } from '@/hooks/useEmailVerification';
 import './style.scss';
 
 interface VerificationPromptProps {
@@ -18,14 +17,12 @@ interface VerificationPromptProps {
 export const VerificationPrompt = ({
     title,
     message,
-    email,
     isVerified,
     onResendVerification,
     variant = 'banner'
 }: VerificationPromptProps) => {
     const [isResending, setIsResending] = useState(false);
     const [statusMessage, setStatusMessage] = useState('');
-    const { resendVerification } = useEmailVerification();
 
     const handleResendVerification = async () => {
         if (!onResendVerification) return;

@@ -72,7 +72,6 @@ const MediaUploader = ({
     utilityId,
     throwingPointId,
     onUploadComplete,
-    maxFileSize, // Keep for backward compatibility but not used
     allowedTypes = ['image', 'video'],
     variant = 'default'
 }: MediaUploaderProps) => {
@@ -108,7 +107,7 @@ const MediaUploader = ({
         }
 
         setSelectedFile(file);
-    }, [maxFileSize]);
+    }, []);
 
     const handleFileInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];

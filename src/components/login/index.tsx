@@ -56,7 +56,7 @@ const LoginForm = () => {
             localStorage.setItem('auth-status', 'logged-in');
 
             // Force a page reload to ensure the session is properly recognized
-            window.location.href = '/';
+            window.location.assign('/');
         } catch (err: unknown) {
             console.error('Signin exception:', err);
             setLoading(false);

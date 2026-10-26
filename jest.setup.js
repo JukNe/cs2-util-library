@@ -26,20 +26,25 @@ jest.mock('next/router', () => ({
 
 // Mock Next.js Link component
 jest.mock('next/link', () => {
-    return ({ children, href, ...props }) => {
+    const MockLink = ({ children, href, ...props }) => {
         return (
             <a href={href} {...props}>
                 {children}
             </a>
         )
     }
+    MockLink.displayName = 'MockNextLink'
+    return MockLink
 })
 
 // Mock Next.js Image component
 jest.mock('next/image', () => {
-    return ({ src, alt, ...props }) => {
+    const MockImage = ({ src, alt, ...props }) => {
+        // eslint-disable-next-line @next/next/no-img-element -- test mock
         return <img src={src} alt={alt} {...props} />
     }
+    MockImage.displayName = 'MockNextImage'
+    return MockImage
 })
 
 // Mock fetch globally

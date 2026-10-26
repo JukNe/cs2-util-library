@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { TUtilityLandingPoint } from '@/types/utilities';
 import { BsDownload, BsCheck, BsX, BsShare, BsArrowLeft } from 'react-icons/bs';
@@ -17,36 +17,38 @@ interface SharedUtilityData {
     description?: string;
 }
 
+function parseSharePayload(
+    shareCode: string | undefined,
+    validateShareCode: (code: string) => boolean
+): { isValidCode: boolean; sharedData: SharedUtilityData | null } {
+    if (!shareCode) {
+        return { isValidCode: false, sharedData: null };
+    }
+
+    if (!validateShareCode(shareCode)) {
+        return { isValidCode: false, sharedData: null };
+    }
+
+    try {
+        const parsedData = JSON.parse(atob(shareCode)) as SharedUtilityData;
+        return { isValidCode: true, sharedData: parsedData };
+    } catch {
+        console.error('Failed to parse share code');
+        return { isValidCode: false, sharedData: null };
+    }
+}
+
 export default function SharePage() {
     const params = useParams<{ code: string }>();
     const router = useRouter();
     const { importUtilities, validateShareCode, isImporting, error } = useUtilitySharing();
-    const [sharedData, setSharedData] = useState<SharedUtilityData | null>(null);
-    const [isValidCode, setIsValidCode] = useState(false);
     const [importSuccess, setImportSuccess] = useState(false);
-    const [loading, setLoading] = useState(true);
 
     const shareCode = params.code;
-
-    useEffect(() => {
-        if (shareCode) {
-            const isValid = validateShareCode(shareCode);
-            setIsValidCode(isValid);
-
-            if (isValid) {
-                try {
-                    // Parse the share code to get the data
-                    const decodedData = atob(shareCode);
-                    const parsedData = JSON.parse(decodedData);
-                    setSharedData(parsedData);
-                } catch {
-                    console.error('Failed to parse share code');
-                    setIsValidCode(false);
-                }
-            }
-            setLoading(false);
-        }
-    }, [shareCode, validateShareCode]);
+    const { isValidCode, sharedData } = useMemo(
+        () => parseSharePayload(shareCode, validateShareCode),
+        [shareCode, validateShareCode]
+    );
 
     const handleImport = async () => {
         if (!isValidCode || !shareCode) return;
@@ -73,7 +75,7 @@ export default function SharePage() {
         }
     };
 
-    if (loading) {
+    if (!shareCode) {
         return (
             <div className="share-page">
                 <div className="share-container">
@@ -238,4 +240,4 @@ export default function SharePage() {
             </div>
         </div>
     );
-} 
+}

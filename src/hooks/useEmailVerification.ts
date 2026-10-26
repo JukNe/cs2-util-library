@@ -55,7 +55,7 @@ export const useEmailVerification = (): UseEmailVerificationReturn => {
       } else {
         setError(data.error);
       }
-    } catch (err) {
+    } catch {
       setError('Failed to resend verification email. Please try again.');
     } finally {
       setIsResending(false);
@@ -94,7 +94,7 @@ export const useUserLimits = (): UseUserLimitsReturn => {
       } else {
         setError(data.error);
       }
-    } catch (err) {
+    } catch {
       setError('Failed to fetch user limits');
     } finally {
       setIsLoading(false);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { VerificationPrompt } from './VerificationPrompt';
 import { UnknownError } from '@/types/errors';
 
@@ -12,6 +12,14 @@ interface VerificationErrorHandlerProps {
     onResendVerification?: () => void;
 }
 
+function requiresEmailVerification(error: UnknownError | null): boolean {
+    return Boolean(
+        error?.requiresVerification ||
+        error?.message?.includes('verify your email') ||
+        error?.error?.includes('verify your email')
+    );
+}
+
 export const VerificationErrorHandler = ({
     error,
     onClose,
@@ -19,19 +27,11 @@ export const VerificationErrorHandler = ({
     isVerified = false,
     onResendVerification
 }: VerificationErrorHandlerProps) => {
-    const [showModal, setShowModal] = useState(false);
-
-    useEffect(() => {
-        // Check if the error requires verification
-        if (error?.requiresVerification ||
-            error?.message?.includes('verify your email') ||
-            error?.error?.includes('verify your email')) {
-            setShowModal(true);
-        }
-    }, [error]);
+    const [dismissedError, setDismissedError] = useState<UnknownError | null>(null);
+    const showModal = requiresEmailVerification(error) && error !== dismissedError;
 
     const handleClose = () => {
-        setShowModal(false);
+        setDismissedError(error);
         onClose();
     };
 

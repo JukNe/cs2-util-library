@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { BsX, BsChevronLeft, BsChevronRight, BsQuestionCircle } from 'react-icons/bs';
 import { TutorialStep } from './useTutorial';
@@ -16,6 +16,10 @@ interface TutorialOverlayProps {
     onSkip: () => void;
 }
 
+const subscribe = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
     isActive,
     currentStep,
@@ -27,11 +31,7 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
 }) => {
     const overlayRef = useRef<HTMLDivElement>(null);
     const highlightRef = useRef<HTMLDivElement>(null);
-    const [isClient, setIsClient] = useState(false);
-
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
+    const isClient = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
 
     useEffect(() => {
         if (!isActive || !currentStep?.target) return;

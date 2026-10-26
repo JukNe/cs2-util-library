@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { useUtilitySharing } from '@/hooks/useUtilitySharing';
 import { TUtilityLandingPoint } from '@/types/utilities';
@@ -11,6 +11,10 @@ interface ImportButtonProps {
     onImportSuccess?: () => void;
     className?: string;
 }
+
+const subscribe = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 export const ImportButton = ({ onImportSuccess, className = '' }: ImportButtonProps) => {
     const { importUtilities, validateShareCode, isImporting, error } = useUtilitySharing();
@@ -24,12 +28,7 @@ export const ImportButton = ({ onImportSuccess, className = '' }: ImportButtonPr
         sharedAt: string;
         description?: string;
     } | null>(null);
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-        return () => setMounted(false);
-    }, []);
+    const mounted = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
 
     const handleShareCodeChange = (value: string) => {
         setShareCode(value);
