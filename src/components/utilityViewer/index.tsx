@@ -9,6 +9,7 @@ interface UtilityViewerProps {
     onMediaDescriptionChange?: (mediaId: string, description: string) => void;
     pendingMediaChanges?: Record<string, string>;
     onMediaUploaded?: () => void;
+    onRequestEdit?: () => void;
 }
 
 export interface UtilityViewerRef {
@@ -22,25 +23,20 @@ const UtilityViewer = forwardRef<UtilityViewerRef, UtilityViewerProps>((props, r
         isEditingDescription = false,
         onMediaDescriptionChange,
         pendingMediaChanges,
-        onMediaUploaded
+        onMediaUploaded,
+        onRequestEdit
     } = props;
     const mediaCarouselRef = useRef<MediaCarouselRef | null>(null);
 
-    // Expose fetchMedia function to parent component
     useImperativeHandle(ref, () => ({
         fetchMedia: () => {
-            if (mediaCarouselRef.current) {
-                mediaCarouselRef.current.fetchMedia();
-            }
+            mediaCarouselRef.current?.fetchMedia();
         }
     }));
 
     return (
-        <div className="utility-preview">
-            <div className="preview-header">
-            </div>
+        <div className={`utility-preview ${isEditingDescription ? 'is-editing' : ''}`}>
             <div className="preview-content">
-                {/* Media Carousel with integrated upload and media description overlay */}
                 <div className="media-carousel-section">
                     <MediaCarousel
                         ref={mediaCarouselRef}
@@ -51,6 +47,7 @@ const UtilityViewer = forwardRef<UtilityViewerRef, UtilityViewerProps>((props, r
                         onMediaDescriptionChange={onMediaDescriptionChange}
                         pendingMediaChanges={pendingMediaChanges}
                         onMediaUploaded={onMediaUploaded}
+                        onRequestEdit={onRequestEdit}
                     />
                 </div>
             </div>

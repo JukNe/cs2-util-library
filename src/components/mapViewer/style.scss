@@ -89,10 +89,10 @@
 .utility-lp-button.dragging {
     border: 3px solid #FF9800;
     box-shadow: 0 0 15px rgba(255, 152, 0, 0.8);
-    transform: scale(1.2);
     cursor: grabbing !important;
     opacity: 0.8;
     z-index: 1000;
+    transition: none;
 }
 
 .utility-lp-button.pending-drag {
@@ -128,28 +128,29 @@
     background: lime;
     position: absolute;
     z-index: 10;
-    border: none;
+    border: 2px solid rgba(0, 0, 0, 0.35);
     border-radius: 50%;
     height: 2em;
     width: 2em;
     align-content: center;
     /* Center the button on the position */
     pointer-events: auto;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
 }
 
 .utility-tp-button.dragging {
     border: 3px solid #FF9800;
     box-shadow: 0 0 15px rgba(255, 152, 0, 0.8);
-    transform: scale(1.2);
     cursor: grabbing !important;
-    opacity: 0.8;
+    opacity: 0.9;
     z-index: 1000;
+    transition: none;
 }
 
 .utility-tp-button.pending-drag {
     border: 3px solid #FFC107;
     box-shadow: 0 0 10px rgba(255, 193, 7, 0.6);
-    transform: scale(1.1);
     cursor: wait !important;
     animation: pulse 1.5s ease-in-out;
     z-index: 1000;
@@ -441,15 +442,326 @@
     position: absolute;
     right: 0;
     top: 0;
-    width: 30%;
+    width: min(360px, 32%);
+    max-height: calc(100vh - 6em);
     height: min-content;
     z-index: 1005;
-    background-color: rgba(0, 0, 0, 0.95);
+    background: rgba(18, 18, 18, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
     display: flex;
     flex-direction: column;
-    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
     margin-top: 4em;
-    margin-right: 2em;
+    margin-right: 1.5em;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+
+    // Shared horizontal inset for every LP inspector row
+    --lp-pad-x: 14px;
+
+    &.is-minimized {
+        width: min(320px, 36%);
+        max-height: none;
+    }
+
+    &.is-editing {
+        width: min(420px, 38%);
+    }
+
+    &.lp-inspector {
+        .modal-header {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.65rem;
+            padding: 12px var(--lp-pad-x);
+            background: transparent;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            min-height: 0;
+        }
+
+        .inspector-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            min-width: 0;
+        }
+
+        .badge-row {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 0.35rem;
+            align-items: center;
+            min-width: 0;
+            flex: 1;
+
+            .type-badge,
+            .team-badge,
+            .meta-badge {
+                display: inline-flex;
+                align-items: center;
+                padding: 0.15rem 0.45rem;
+                border-radius: 4px;
+                font-size: 0.68rem;
+                font-weight: 700;
+                letter-spacing: 0.03em;
+                text-transform: uppercase;
+                line-height: 1.3;
+                white-space: nowrap;
+            }
+
+            .type-badge {
+                background: rgba(140, 160, 180, 0.22);
+                color: #c5d0da;
+                border: 1px solid rgba(140, 160, 180, 0.35);
+
+                &.type-flash,
+                &.type-flashbang { background: rgba(240, 210, 80, 0.18); color: #f0d96a; border-color: rgba(240, 210, 80, 0.3); }
+                &.type-molotov { background: rgba(255, 120, 60, 0.18); color: #ff9a5c; border-color: rgba(255, 120, 60, 0.3); }
+                &.type-he,
+                &.type-hegrenade { background: rgba(90, 200, 120, 0.18); color: #7ddea0; border-color: rgba(90, 200, 120, 0.3); }
+            }
+
+            .team-badge {
+                border: 1px solid transparent;
+
+                &.team-T {
+                    background: rgba(220, 120, 60, 0.2);
+                    color: #f0a070;
+                    border-color: rgba(220, 120, 60, 0.35);
+                }
+
+                &.team-CT {
+                    background: rgba(70, 140, 220, 0.2);
+                    color: #7eb6f0;
+                    border-color: rgba(70, 140, 220, 0.35);
+                }
+            }
+
+            .meta-badge {
+                background: rgba(255, 255, 255, 0.06);
+                color: rgba(255, 255, 255, 0.55);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                font-weight: 600;
+                text-transform: none;
+                letter-spacing: 0;
+            }
+        }
+
+        .window-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            flex-shrink: 0;
+
+            .minimize-button,
+            .close-button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 28px;
+                height: 28px;
+                padding: 0;
+                border: none;
+                border-radius: 6px;
+                background: transparent;
+                color: rgba(255, 255, 255, 0.55);
+                cursor: pointer;
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.08);
+                    color: rgba(255, 255, 255, 0.9);
+                }
+            }
+        }
+
+        .header-content {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.65rem;
+            min-width: 0;
+        }
+
+        .modal-title {
+            margin: 0;
+            color: #f2f2f2;
+            font-size: 1.05rem;
+            font-weight: 650;
+            letter-spacing: -0.02em;
+            line-height: 1.25;
+        }
+
+        .modal-title-compact {
+            margin: 0;
+            color: #f2f2f2;
+            font-size: 0.92rem;
+            font-weight: 600;
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .title-edit .title-input,
+        .description-edit .description-input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0.45rem 0.65rem;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 6px;
+            font-family: inherit;
+            color: #f2f2f2;
+            background: rgba(0, 0, 0, 0.35);
+
+            &:focus {
+                outline: none;
+                border-color: rgba(120, 180, 255, 0.55);
+            }
+
+            &::placeholder {
+                color: rgba(255, 255, 255, 0.35);
+            }
+        }
+
+        .title-edit .title-input {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .description-edit .description-input {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .description-text {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.65);
+            line-height: 1.45;
+            font-size: 0.85rem;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+
+            &.edit-actions {
+                justify-content: space-between;
+
+                .action-group {
+                    display: flex;
+                    gap: 0.4rem;
+                    margin-left: auto;
+                }
+            }
+
+            .add-throwing-point-button,
+            .edit-button,
+            .delete-button,
+            .cancel-button,
+            .save-button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.35rem;
+                width: auto;
+                height: 30px;
+                min-height: 30px;
+                padding: 0 0.7rem;
+                border-radius: 6px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                line-height: 1;
+                cursor: pointer;
+                white-space: nowrap;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                transition: background 0.15s ease, border-color 0.15s ease;
+                box-sizing: border-box;
+
+                svg {
+                    width: 14px;
+                    height: 14px;
+                    flex-shrink: 0;
+                }
+
+                &:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+            }
+
+            .add-throwing-point-button {
+                background: rgba(60, 160, 90, 0.85);
+                border-color: rgba(90, 200, 120, 0.35);
+                color: white;
+
+                &:hover {
+                    background: rgba(70, 175, 100, 0.95);
+                }
+
+                &.active {
+                    background: rgba(180, 55, 55, 0.9);
+                    border-color: rgba(220, 90, 90, 0.4);
+                }
+            }
+
+            .edit-button,
+            .cancel-button {
+                background: rgba(255, 255, 255, 0.06);
+                color: rgba(255, 255, 255, 0.85);
+
+                &:hover:not(:disabled) {
+                    background: rgba(255, 255, 255, 0.12);
+                    color: white;
+                }
+            }
+
+            .delete-button {
+                background: rgba(180, 55, 55, 0.9);
+                border-color: rgba(220, 90, 90, 0.35);
+                color: white;
+            }
+
+            .save-button {
+                background: rgba(60, 160, 90, 0.9);
+                border-color: rgba(90, 200, 120, 0.35);
+                color: white;
+            }
+        }
+
+        .modal-content {
+            padding: 0 var(--lp-pad-x) 12px;
+            overflow: auto;
+            min-height: 0;
+        }
+
+        .utility-preview {
+            padding: 0;
+        }
+
+        .media-carousel {
+            border-radius: 8px;
+
+            &.is-compact {
+                .carousel-empty-compact {
+                    align-items: flex-start;
+                    text-align: left;
+                    padding: 12px;
+                    gap: 0.5rem;
+                    min-height: 0;
+                }
+            }
+        }
+
+        &.is-minimized .modal-header {
+            padding: 10px var(--lp-pad-x);
+            gap: 0.4rem;
+        }
+    }
 }
 
 .throwing-point-modal-wrapper {
@@ -459,11 +771,42 @@
     width: 100%;
     height: 100vh;
     z-index: 1010;
-    background-color: rgba(0, 0, 0, 0.95);
+    background: #111;
     display: flex;
     flex-direction: column;
     box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
     padding: 2rem;
+
+    .modal-header {
+        background: #1a1a1a;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+    }
+
+    .modal-content {
+        background: #111;
+        flex: 1;
+        min-height: 0;
+    }
+
+    .media-content {
+        background: #151515;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .utility-preview,
+    .media-carousel {
+        background: #151515;
+    }
+
+    .media-carousel.is-compact,
+    .carousel-empty-compact,
+    .carousel-upload-section {
+        background: #151515;
+    }
 }
 
 // Original throwing point modal styling
@@ -576,154 +919,60 @@
     }
 }
 
+// Shared header used by throwing-point modal (LP inspector overrides under .lp-inspector)
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
-    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 1rem 1.25rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    min-height: 80px;
+    gap: 1rem;
 
     .header-content {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.5rem;
         flex: 1;
         min-width: 0;
-
-        .title-section {
-            .modal-title {
-                margin: 0;
-                color: white;
-                font-size: 1.5rem;
-                font-weight: 700;
-                letter-spacing: -0.5px;
-                line-height: 1.2;
-            }
-
-            .title-edit {
-                .title-input {
-                    width: 100%;
-                    min-width: 200px;
-                    padding: 0.75rem 1rem;
-                    border: 2px solid #e9ecef;
-                    border-radius: 8px;
-                    font-family: inherit;
-                    font-size: 1.5rem;
-                    font-weight: 700;
-                    line-height: 1.5;
-                    color: #495057;
-                    background: white;
-                    transition: border-color 0.2s ease;
-
-                    &:focus {
-                        outline: none;
-                        border-color: #667eea;
-                        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-                    }
-
-                    &::placeholder {
-                        color: #adb5bd;
-                    }
-                }
-            }
-        }
-
-        .description-section {
-            .description-display {
-                .description-text {
-                    margin: 0;
-                    color: rgba(255, 255, 255, 0.9);
-                    line-height: 1.6;
-                    font-size: 1rem;
-                }
-            }
-
-            .description-edit {
-                .description-input {
-                    width: 100%;
-                    min-width: 200px;
-                    padding: 0.75rem 1rem;
-                    border: 2px solid #e9ecef;
-                    border-radius: 8px;
-                    font-family: inherit;
-                    font-size: 1rem;
-                    font-weight: 500;
-                    line-height: 1.5;
-                    color: #495057;
-                    background: white;
-                    transition: border-color 0.2s ease;
-
-                    &:focus {
-                        outline: none;
-                        border-color: #667eea;
-                        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-                    }
-
-                    &::placeholder {
-                        color: #adb5bd;
-                    }
-                }
-            }
-        }
     }
 
-    .header-actions {
+    .title-text,
+    .modal-title {
+        margin: 0;
+        color: white;
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    .description-text {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 0.95rem;
+    }
+}
+
+.throwing-point-modal-wrapper .modal-header .header-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-shrink: 0;
+
+    .edit-button,
+    .close-button {
         display: flex;
-        gap: 0.75rem;
         align-items: center;
-        flex-shrink: 0;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        cursor: pointer;
 
-        .add-throwing-point-button,
-        .edit-button,
-        .minimize-button,
-        .close-button {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 44px;
-            height: 44px;
-            border: none;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            cursor: pointer;
-            transition: all 0.2s ease;
-
-            &:hover {
-                background: rgba(255, 255, 255, 0.2);
-                transform: translateY(-1px);
-            }
-
-            &:active {
-                transform: translateY(0);
-            }
-        }
-
-        .add-throwing-point-button {
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-
-            &:hover {
-                background: linear-gradient(135deg, #45a049 0%, #388E3C 100%);
-            }
-
-            &.active {
-                background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-                box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
-
-                &:hover {
-                    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
-                }
-            }
-        }
-
-        .edit-button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-
-            &:hover {
-                background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-            }
+        &:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
     }
 }
@@ -732,95 +981,85 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    height: 100%;
+    overflow: auto;
     width: 100%;
+    min-height: 0;
 
     .edit-actions-bar {
-        background: rgba(0, 0, 0, 0.1);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 1rem 1.5rem;
+        background: rgba(0, 0, 0, 0.25);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 0.65rem 0.85rem;
 
         .edit-actions {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 1rem;
+            gap: 0.75rem;
 
             .delete-button {
                 display: flex;
                 align-items: center;
-                gap: 0.5rem;
-                padding: 0.75rem 1.5rem;
-                background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+                gap: 0.35rem;
+                padding: 0.45rem 0.75rem;
+                background: rgba(180, 55, 55, 0.9);
                 color: white;
-                border: none;
-                border-radius: 8px;
-                font-size: 0.9rem;
+                border: 1px solid rgba(220, 90, 90, 0.35);
+                border-radius: 6px;
+                font-size: 0.8rem;
                 font-weight: 600;
                 cursor: pointer;
-                transition: all 0.2s ease;
-                box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+                transition: background 0.15s ease;
 
                 &:hover:not(:disabled) {
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+                    background: rgba(200, 65, 65, 0.95);
                 }
 
                 &:disabled {
                     opacity: 0.5;
                     cursor: not-allowed;
-                    transform: none;
                 }
             }
 
             .action-group {
                 display: flex;
-                gap: 0.75rem;
+                gap: 0.45rem;
 
                 .cancel-button,
                 .save-button {
                     display: flex;
                     align-items: center;
-                    gap: 0.5rem;
-                    padding: 0.75rem 1.5rem;
-                    border: none;
-                    border-radius: 8px;
-                    font-size: 0.9rem;
+                    gap: 0.3rem;
+                    padding: 0.45rem 0.75rem;
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    border-radius: 6px;
+                    font-size: 0.8rem;
                     font-weight: 600;
                     cursor: pointer;
-                    transition: all 0.2s ease;
-                    min-width: 120px;
+                    transition: background 0.15s ease;
                     justify-content: center;
-
-                    &:hover:not(:disabled) {
-                        transform: translateY(-1px);
-                    }
 
                     &:disabled {
                         opacity: 0.5;
                         cursor: not-allowed;
-                        transform: none;
                     }
                 }
 
                 .cancel-button {
-                    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-                    color: white;
-                    box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+                    background: rgba(255, 255, 255, 0.08);
+                    color: rgba(255, 255, 255, 0.85);
 
                     &:hover:not(:disabled) {
-                        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+                        background: rgba(255, 255, 255, 0.14);
                     }
                 }
 
                 .save-button {
-                    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+                    background: rgba(60, 160, 90, 0.9);
+                    border-color: rgba(90, 200, 120, 0.35);
                     color: white;
-                    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
 
                     &:hover:not(:disabled) {
-                        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+                        background: rgba(70, 175, 100, 0.95);
                     }
                 }
             }

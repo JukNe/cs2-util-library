@@ -15,6 +15,7 @@ interface MediaCarouselProps {
     onMediaDescriptionChange?: (mediaId: string, description: string) => void;
     pendingMediaChanges?: Record<string, string>;
     onMediaUploaded?: () => void;
+    onRequestEdit?: () => void;
 }
 
 export interface MediaCarouselRef {
@@ -29,7 +30,8 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
     isEditing = false,
     onMediaDescriptionChange,
     pendingMediaChanges,
-    onMediaUploaded
+    onMediaUploaded,
+    onRequestEdit
 }, ref) => {
     const [media, setMedia] = useState<Media[]>([]);
     const [loading, setLoading] = useState(true);
@@ -222,37 +224,49 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
 
     return (
         <>
-            <div className="media-carousel">
+            <div className={`media-carousel ${media.length === 0 && !isEditing && !showUploadSection ? 'is-compact' : ''}`}>
                 {media.length === 0 ? (
-                    // Show uploader when no media exists
-                    <div className="carousel-upload-section">
-                        <div className="upload-header">
-                            <h4>📷 Media Gallery</h4>
-                            <p>No media uploaded yet. Upload your first image or video!</p>
-                        </div>
-                        <div className="upload-actions">
-                            <MediaUploader
-                                utilityId={utilityId}
-                                throwingPointId={throwingPointId}
-                                onUploadComplete={handleMediaUploaded}
-                            />
-                            <div className="attach-media-section">
-                                <p>Or attach existing media:</p>
-                                <button
-                                    className="attach-existing-button"
-                                    onClick={() => setIsAttacherVisible(true)}
-                                >
-                                    <BsLink size="1em" />
-                                    Attach Existing Media
-                                </button>
+                    isEditing || showUploadSection ? (
+                        <div className="carousel-upload-section">
+                            <div className="upload-header">
+                                <h4>Add media</h4>
+                                <p>Upload or attach images and videos for this point</p>
+                            </div>
+                            <div className="upload-actions">
+                                <MediaUploader
+                                    utilityId={utilityId}
+                                    throwingPointId={throwingPointId}
+                                    onUploadComplete={handleMediaUploaded}
+                                />
+                                <div className="attach-media-section">
+                                    <p>Or attach existing media:</p>
+                                    <button
+                                        className="attach-existing-button"
+                                        onClick={() => setIsAttacherVisible(true)}
+                                    >
+                                        <BsLink size="1em" />
+                                        Attach Existing Media
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="carousel-empty-compact">
+                            <p>No media yet</p>
+                            {onRequestEdit && (
+                                <button
+                                    type="button"
+                                    className="add-media-button"
+                                    onClick={onRequestEdit}
+                                >
+                                    Add media
+                                </button>
+                            )}
+                        </div>
+                    )
                 ) : (
-                    // Show carousel with media
                     <>
                         <div className="carousel-container">
-                            {/* Previous button */}
                             {media.length > 1 && (
                                 <button
                                     className="carousel-button prev-button"
@@ -263,10 +277,8 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
                                 </button>
                             )}
 
-                            {/* Main media display */}
                             {renderMedia(media[currentIndex])}
 
-                            {/* Next button */}
                             {media.length > 1 && (
                                 <button
                                     className="carousel-button next-button"
@@ -277,7 +289,6 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
                                 </button>
                             )}
 
-                            {/* Fullscreen button */}
                             <button
                                 className="carousel-fullscreen-button"
                                 onClick={toggleFullscreen}
@@ -286,27 +297,28 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
                                 <BsFullscreen size="1em" />
                             </button>
 
-                            {/* Attach Media button */}
-                            <button
-                                className="carousel-attach-button"
-                                onClick={() => setIsAttacherVisible(true)}
-                                title="Attach existing media"
-                            >
-                                <BsLink size="1em" />
-                            </button>
+                            {isEditing && (
+                                <>
+                                    <button
+                                        className="carousel-attach-button"
+                                        onClick={() => setIsAttacherVisible(true)}
+                                        title="Attach existing media"
+                                    >
+                                        <BsLink size="1em" />
+                                    </button>
 
-                            {/* Delete button */}
-                            <button
-                                className="carousel-delete-button"
-                                onClick={() => handleDelete(media[currentIndex].id)}
-                                disabled={deleting === media[currentIndex].id}
-                                title="Delete media"
-                            >
-                                <BsTrash size="1em" />
-                            </button>
+                                    <button
+                                        className="carousel-delete-button"
+                                        onClick={() => handleDelete(media[currentIndex].id)}
+                                        disabled={deleting === media[currentIndex].id}
+                                        title="Delete media"
+                                    >
+                                        <BsTrash size="1em" />
+                                    </button>
+                                </>
+                            )}
                         </div>
 
-                        {/* Dots indicator */}
                         {media.length > 1 && (
                             <div className="carousel-dots">
                                 {media.map((_, index) => (
@@ -320,7 +332,6 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
                             </div>
                         )}
 
-                        {/* Counter */}
                         {media.length > 1 && (
                             <div className="carousel-counter">
                                 {currentIndex + 1} / {media.length}
@@ -329,18 +340,26 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
                     </>
                 )}
 
-                {/* Conditionally visible upload section below carousel */}
-                {showUploadSection && (
+                {showUploadSection && media.length > 0 && (
                     <div className="carousel-upload-section">
                         <div className="upload-header">
-                            <h4>📤 Add Media</h4>
-                            <p>Drag and drop or click to upload new images or videos</p>
+                            <h4>Add media</h4>
+                            <p>Drag and drop or click to upload</p>
                         </div>
                         <MediaUploader
                             utilityId={utilityId}
                             throwingPointId={throwingPointId}
                             onUploadComplete={handleMediaUploaded}
                         />
+                        <div className="attach-media-section">
+                            <button
+                                className="attach-existing-button"
+                                onClick={() => setIsAttacherVisible(true)}
+                            >
+                                <BsLink size="1em" />
+                                Attach Existing Media
+                            </button>
+                        </div>
                     </div>
                 )}
 

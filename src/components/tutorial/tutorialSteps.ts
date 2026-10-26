@@ -4,7 +4,7 @@ export const getUtilityTutorialSteps = (): TutorialStep[] => [
     {
         id: 'welcome',
         title: 'Welcome to CS2 Util Library!',
-        content: 'Let\'s learn how to add your first utility. This tutorial will guide you through the process step by step.',
+        content: 'This tutorial will guide you through adding your first utility step by step.',
         position: 'center'
     },
     {

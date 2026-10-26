@@ -496,7 +496,7 @@ const MapViewerInner = (props: MapViewerProps) => {
         }
 
         // Toggle selection: if clicking the same landing point, deselect it
-        if (selectedLP === data) {
+        if (selectedLP?.id === data.id) {
             setSelectedLP(undefined);
             setIsLPModalOpen(false);
             // Reset throwing point mode when deselecting landing point
@@ -594,14 +594,14 @@ const MapViewerInner = (props: MapViewerProps) => {
             }).then(result => {
                 if (result.success) {
                     // Remove from local state
-                    setUtility((previous) => previous.filter(item => item !== lp));
+                    setUtility((previous) => previous.filter(item => item.id !== lp.id));
 
                     // Close modals if the deleted landing point was selected
-                    if (selectedLP === lp) {
+                    if (selectedLP?.id === lp.id) {
                         setSelectedLP(undefined);
                         setIsLPModalOpen(false);
                     }
-                    if (selectedTP && lp.throwingPoints.includes(selectedTP)) {
+                    if (selectedTP && lp.throwingPoints.some(tp => tp.id === selectedTP.id)) {
                         setSelectedTP(undefined);
                         setIsModalOpen(false);
                     }
@@ -799,11 +799,11 @@ const MapViewerInner = (props: MapViewerProps) => {
         setIsDragPending(true);
         setDraggedLP(lp);
 
-        // Start a 1.5 second timeout before actual dragging begins
+        // Short hold before drag starts so clicks still open the modal
         const timeout = setTimeout(() => {
             setIsDraggingLP(true);
             setIsDragPending(false);
-        }, 1500);
+        }, 400);
 
         setDragStartTimeout(timeout);
 
@@ -847,27 +847,20 @@ const MapViewerInner = (props: MapViewerProps) => {
         // If we're not actually dragging, do nothing
         if (!isDraggingLP || !draggedLP) return;
 
+        // Use the live dragged position (avoids stale utility closure)
+        const position = draggedLP.position;
+        const draggedId = draggedLP.id;
+
         setIsSavingPosition(true);
 
         try {
-            // Get the current position from the utility state
-            const currentUtility = utility.find(item => item.id === draggedLP.id);
-            if (!currentUtility) {
-                throw new Error('Utility not found in state');
-            }
-
             // Save the new position to the database
-            const response = await fetch(`/api/utilities/${draggedLP.id}`, {
+            const response = await fetch(`/api/utilities/${draggedId}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    position: {
-                        X: currentUtility.position.X,
-                        Y: currentUtility.position.Y
-                    }
-                }),
+                body: JSON.stringify({ position }),
                 credentials: 'include'
             });
 
@@ -916,21 +909,21 @@ const MapViewerInner = (props: MapViewerProps) => {
             setDraggedTPAssociatedLPId(associatedLP.id);
         }
 
-        // Ensure the associated landing point is selected when starting to drag
-        if (associatedLP && selectedLP !== associatedLP) {
+        // Keep the associated landing point selected for the whole drag
+        if (associatedLP && selectedLP?.id !== associatedLP.id) {
             setSelectedLP(associatedLP);
-            setIsLPModalOpen(true);
         }
+        setIsLPModalOpen(true);
 
         // Set drag pending state and start timeout
         setIsTPDragPending(true);
         setDraggedTP(tp);
 
-        // Start a 1.5 second timeout before actual dragging begins
+        // Short hold before drag starts so clicks still open details
         const timeout = setTimeout(() => {
             setIsDraggingTP(true);
             setIsTPDragPending(false);
-        }, 1500);
+        }, 400);
 
         setTPDragStartTimeout(timeout);
 
@@ -945,28 +938,29 @@ const MapViewerInner = (props: MapViewerProps) => {
         if (!img) return;
 
         const position = getMapPercentCoords(e, img);
+        const lpId = draggedTPAssociatedLPId;
 
-        // Update the dragged throwing point position in local state
-        setUtility(prev => prev.map(item => ({
-            ...item,
-            throwingPoints: item.throwingPoints.map(tp =>
-                tp.id === draggedTP.id
-                    ? { ...tp, position }
-                    : tp
-            )
-        })));
-
-        // Also update the draggedTP reference to the new position
-        setDraggedTP(prev => prev ? { ...prev, position } : null);
-
-        // Ensure the selectedLP stays updated with the latest utility data using the stored LP ID
-        if (draggedTPAssociatedLPId) {
-            const updatedSelectedLP = utility.find(item => item.id === draggedTPAssociatedLPId);
-            if (updatedSelectedLP && selectedLP?.id !== draggedTPAssociatedLPId) {
-                setSelectedLP(updatedSelectedLP);
-                setIsLPModalOpen(true);
+        // Update TP position and keep selectedLP pointing at the latest LP object
+        setUtility(prev => {
+            const next = prev.map(item => ({
+                ...item,
+                throwingPoints: item.throwingPoints.map(tp =>
+                    tp.id === draggedTP.id
+                        ? { ...tp, position }
+                        : tp
+                )
+            }));
+            if (lpId) {
+                const updatedLP = next.find(item => item.id === lpId);
+                if (updatedLP) {
+                    setSelectedLP(updatedLP);
+                }
             }
-        }
+            return next;
+        });
+
+        setDraggedTP(prev => prev ? { ...prev, position } : null);
+        setIsLPModalOpen(true);
     };
 
     const handleTPDragEnd = async () => {
@@ -980,6 +974,7 @@ const MapViewerInner = (props: MapViewerProps) => {
         if (isTPDragPending) {
             setIsTPDragPending(false);
             setDraggedTP(null);
+            // Keep associated LP selected even if drag never started
             setDraggedTPAssociatedLPId(null);
             // Don't return here - let the click event proceed
         }
@@ -987,34 +982,20 @@ const MapViewerInner = (props: MapViewerProps) => {
         // If we're not actually dragging, do nothing
         if (!isDraggingTP || !draggedTP) return;
 
+        const position = draggedTP.position;
+        const draggedId = draggedTP.id;
+        const lpId = draggedTPAssociatedLPId;
+
         setIsSavingTPPosition(true);
 
         try {
-            // Get the current position from the utility state
-            const currentUtility = utility.find(item =>
-                item.throwingPoints.some(tp => tp.id === draggedTP.id)
-            );
-            if (!currentUtility) {
-                throw new Error('Utility not found in state');
-            }
-
-            const currentTP = currentUtility.throwingPoints.find(tp => tp.id === draggedTP.id);
-            if (!currentTP) {
-                throw new Error('Throwing point not found in state');
-            }
-
             // Save the new position to the database
-            const response = await fetch(`/api/utilities/throwing-points/${draggedTP.id}`, {
+            const response = await fetch(`/api/utilities/throwing-points/${draggedId}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    position: {
-                        X: currentTP.position.X,
-                        Y: currentTP.position.Y
-                    }
-                }),
+                body: JSON.stringify({ position }),
                 credentials: 'include'
             });
 
@@ -1039,6 +1020,18 @@ const MapViewerInner = (props: MapViewerProps) => {
             setIsTPDragPending(false);
             setDraggedTP(null);
             setDraggedTPAssociatedLPId(null);
+
+            // Keep landing point active after TP drag completes
+            if (lpId) {
+                setUtility(current => {
+                    const lp = current.find(item => item.id === lpId);
+                    if (lp) {
+                        setSelectedLP(lp);
+                    }
+                    return current;
+                });
+                setIsLPModalOpen(true);
+            }
         }
     };
 
@@ -1456,6 +1449,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                                 pendingMediaChanges={pendingMediaChanges}
                                 isEditingDescription={isEditingDescription}
                                 onMediaUploaded={() => selectedTP.id && invalidateMediaCache(selectedTP.id)}
+                                onRequestEdit={handleEditClick}
                             />
                         </div>
                     </div>
@@ -1464,110 +1458,116 @@ const MapViewerInner = (props: MapViewerProps) => {
 
             {/* Landing Point Modal */}
             {selectedLP && isLPModalOpen &&
-                <div className={'modal-wrapper'}>
-                    {/* Modal Header */}
+                <div className={`modal-wrapper lp-inspector ${isLPModalMinimized ? 'is-minimized' : ''} ${isEditingDescription || isEditingTitle ? 'is-editing' : ''}`}>
                     <div className='modal-header'>
-                        <div className="header-content">
-                            <div className="title-section">
-                                {isEditingTitle ? (
-                                    <div className="title-edit">
-                                        <input
-                                            type="text"
-                                            value={editedTitle}
-                                            onChange={(e) => setEditedTitle(e.target.value)}
-                                            placeholder="Enter title..."
-                                            className="title-input"
-                                        />
-                                    </div>
-                                ) : (
-                                    <h2 className="modal-title">
-                                        {isEditingTitle
-                                            ? (editedTitle && editedTitle.trim() !== '' ? editedTitle : 'No title available.')
-                                            : (selectedLP.title && selectedLP.title.trim() !== ''
-                                                ? selectedLP.title
-                                                : `${selectedLP.utilityType} Utility (${selectedLP.team})`)
-                                        }
-                                    </h2>
-                                )}
+                        <div className="inspector-toolbar">
+                            <div className="badge-row">
+                                <span className={`type-badge type-${(selectedLP.utilityType || '').toLowerCase()}`}>
+                                    {selectedLP.utilityType}
+                                </span>
+                                <span className={`team-badge team-${selectedLP.team}`}>
+                                    {selectedLP.team}
+                                </span>
+                                <span className="meta-badge">
+                                    {selectedLP.throwingPoints?.length ?? 0} throw{(selectedLP.throwingPoints?.length ?? 0) === 1 ? '' : 's'}
+                                </span>
                             </div>
+                            <div className="window-actions">
+                                <button
+                                    onClick={handleLPModalToggleMinimize}
+                                    className="minimize-button"
+                                    title={isLPModalMinimized ? "Expand" : "Minimize"}
+                                >
+                                    {isLPModalMinimized ? <BsChevronDown size={'1.15em'} /> : <BsChevronUp size={'1.15em'} />}
+                                </button>
+                                <button
+                                    onClick={handleLPModalClose}
+                                    className="close-button"
+                                    title="Close"
+                                >
+                                    <BsX size={'1.35em'} />
+                                </button>
+                            </div>
+                        </div>
 
-                            {!isLPModalMinimized && (
-                                <div className="description-section">
-                                    {isEditingDescription ? (
+                        {isLPModalMinimized ? (
+                            <h2 className="modal-title modal-title-compact">
+                                {selectedLP.title?.trim()
+                                    ? selectedLP.title
+                                    : 'Untitled landing point'}
+                            </h2>
+                        ) : (
+                            <div className="header-content">
+                                <div className="title-section">
+                                    {isEditingTitle ? (
+                                        <div className="title-edit">
+                                            <input
+                                                type="text"
+                                                value={editedTitle}
+                                                onChange={(e) => setEditedTitle(e.target.value)}
+                                                placeholder="Enter title..."
+                                                className="title-input"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <h2 className="modal-title">
+                                            {selectedLP.title?.trim()
+                                                ? selectedLP.title
+                                                : 'Untitled landing point'}
+                                        </h2>
+                                    )}
+                                </div>
+
+                                {isEditingDescription ? (
+                                    <div className="description-section">
                                         <div className="description-edit">
                                             <input
                                                 type="text"
                                                 value={editedDescription}
                                                 onChange={(e) => setEditedDescription(e.target.value)}
-                                                placeholder="Enter description..."
+                                                placeholder="Add a description..."
                                                 className="description-input"
                                             />
                                         </div>
-                                    ) : (
+                                    </div>
+                                ) : selectedLP.description?.trim() ? (
+                                    <div className="description-section">
                                         <div className="description-display">
-                                            <p className="description-text">
-                                                {isEditingDescription
-                                                    ? (editedDescription && editedDescription.trim() !== '' ? editedDescription : 'No description available.')
-                                                    : (selectedLP?.description && selectedLP.description.trim() !== ''
-                                                        ? selectedLP.description
-                                                        : `${selectedLP?.throwingPoints?.length ?? 0} throwing point${(selectedLP?.throwingPoints?.length ?? 0) !== 1 ? 's' : ''} attached`)
-                                                }
-                                            </p>
+                                            <p className="description-text">{selectedLP.description}</p>
                                         </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
+                                    </div>
+                                ) : null}
 
-                        <div className="header-actions">
-                            {!isEditingDescription && !isLPModalMinimized && (
-                                <>
-                                    <button
-                                        onClick={handleAddThrowingPointClick}
-                                        className={`add-throwing-point-button ${isAddingThrowingPoint ? 'active' : ''}`}
-                                        title={isAddingThrowingPoint ? "Cancel adding throwing point" : "Add throwing point"}
-                                    >
-                                        <BsPlus size="1.5em" />
-                                    </button>
-                                    <button
-                                        onClick={handleEditClick}
-                                        className="edit-button"
-                                        title="Edit title, description, and media"
-                                    >
-                                        <BsPencil size="1.5em" />
-                                    </button>
-                                </>
-                            )}
-                            <button
-                                onClick={handleLPModalToggleMinimize}
-                                className="minimize-button"
-                                title={isLPModalMinimized ? "Expand" : "Minimize"}
-                            >
-                                {isLPModalMinimized ? <BsChevronDown size={'1.5em'} /> : <BsChevronUp size={'1.5em'} />}
-                            </button>
-                            <button
-                                onClick={handleLPModalClose}
-                                className="close-button"
-                            >
-                                <BsX size={'2em'} />
-                            </button>
-                        </div>
-                    </div>
+                                {!isEditingDescription && !isEditingTitle && (
+                                    <div className="header-actions">
+                                        <button
+                                            onClick={handleAddThrowingPointClick}
+                                            className={`add-throwing-point-button ${isAddingThrowingPoint ? 'active' : ''}`}
+                                            title={isAddingThrowingPoint ? "Cancel adding throwing point" : "Add throwing point"}
+                                        >
+                                            <BsPlus size={14} />
+                                            <span>{isAddingThrowingPoint ? 'Cancel' : 'Add throw'}</span>
+                                        </button>
+                                        <button
+                                            onClick={handleEditClick}
+                                            className="edit-button"
+                                            title="Edit title, description, and media"
+                                        >
+                                            <BsPencil size={14} />
+                                            <span>Edit</span>
+                                        </button>
+                                    </div>
+                                )}
 
-                    {/* Modal Content */}
-                    {!isLPModalMinimized && (
-                        <div className="modal-content">
-                            {/* Edit Actions Bar */}
-                            {isEditingDescription && (
-                                <div className="edit-actions-bar">
-                                    <div className="edit-actions">
+                                {isEditingDescription && (
+                                    <div className="header-actions edit-actions">
                                         <button
                                             className="delete-button"
                                             onClick={(e) => handleDeleteLandingPoint(selectedLP!, e)}
                                             disabled={isSavingTitle || isSavingDescription}
                                             title="Delete landing point"
                                         >
-                                            <BsTrash size="1.2em" />
+                                            <BsTrash size="1em" />
                                             Delete
                                         </button>
                                         <div className="action-group">
@@ -1585,14 +1585,17 @@ const MapViewerInner = (props: MapViewerProps) => {
                                                 disabled={isSavingTitle || isSavingDescription}
                                             >
                                                 <BsCheck size="1em" />
-                                                Save All
+                                                Save
                                             </button>
                                         </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
+                        )}
+                    </div>
 
-                            {/* Utility Preview */}
+                    {!isLPModalMinimized && (
+                        <div className="modal-content">
                             <UtilityPreview
                                 ref={utilityViewerRef}
                                 utilityId={selectedLP?.id ?? ''}
@@ -1600,6 +1603,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                                 pendingMediaChanges={pendingMediaChanges}
                                 isEditingDescription={isEditingDescription || isEditingTitle}
                                 onMediaUploaded={() => selectedLP?.id && invalidateMediaCache(selectedLP.id)}
+                                onRequestEdit={handleEditClick}
                             />
                         </div>
                     )}
@@ -2043,17 +2047,19 @@ const MapViewerInner = (props: MapViewerProps) => {
                                 return true;
                             })
                             .map((item) => {
-                                const isSelected = selectedLP === item
+                                const isSelected = selectedLP?.id === item.id
                                 return (
                                     <div key={item.id || `${item.position.X}-${item.position.Y}`}>
                                         <button
-                                            className={`utility-lp-button ${isSelected ? 'selected' : ''} ${isDraggingLP && draggedLP === item ? 'dragging' : ''} ${isDragPending && draggedLP === item ? 'pending-drag' : ''}`}
+                                            className={`utility-lp-button ${isSelected ? 'selected' : ''} ${isDraggingLP && draggedLP?.id === item.id ? 'dragging' : ''} ${isDragPending && draggedLP?.id === item.id ? 'pending-drag' : ''}`}
                                             onClick={(e) => handleLPClick(item, e)}
                                             onMouseDown={(e) => handleLPMouseDown(item, e)}
                                             onMouseUp={() => handleLPDragEnd()}
                                             onMouseEnter={(e) => handleLPHover(item, e)}
                                             onMouseLeave={() => {
                                                 handleLPLeave();
+                                                // Don't cancel an active drag when the pointer leaves the marker
+                                                if (isDraggingLP) return;
                                                 if (isDragPending) {
                                                     if (dragStartTimeout) {
                                                         clearTimeout(dragStartTimeout);
@@ -2068,10 +2074,11 @@ const MapViewerInner = (props: MapViewerProps) => {
                                                 top: `${item.position.Y}%`,
                                                 backgroundImage: `url(${getUtilityIconSrc(item.utilityType)})`,
                                                 transform: `translate(-50%, -50%) scale(${1 / zoom})`,
-                                                zIndex: isDraggingLP && draggedLP === item ? 1000 : 'auto'
+                                                zIndex: isDraggingLP && draggedLP?.id === item.id ? 1000 : 'auto',
+                                                cursor: isDraggingLP && draggedLP?.id === item.id ? 'grabbing' : 'grab'
                                             }}
-                                            key={item.position.X.toString() + item.position.Y.toString()}
-                                            title={`${item.utilityType} (${item.team}) - Click to open, hold for 1.5s to drag`}
+                                            key={item.id}
+                                            title={`${item.utilityType} (${item.team}) - Click to open, hold briefly to drag`}
                                         >
                                             <div className="utility-info">
                                                 <span className="utility-count">{item.throwingPoints.length}</span>
@@ -2098,31 +2105,45 @@ const MapViewerInner = (props: MapViewerProps) => {
                                                         zIndex: 5
                                                     }}
                                                 >
-                                                    {item.throwingPoints.map((tp) => (
+                                                    {item.throwingPoints.map((tp) => {
+                                                        const lineTpPosition =
+                                                            isDraggingTP && draggedTP?.id === tp.id
+                                                                ? draggedTP.position
+                                                                : tp.position;
+                                                        return (
                                                         <line
-                                                            key={`line-${tp.id || `${tp.position.X}-${tp.position.Y}`}`}
+                                                            key={`line-${tp.id}`}
                                                             x1={`${item.position.X}%`}
                                                             y1={`${item.position.Y}%`}
-                                                            x2={`${tp.position.X}%`}
-                                                            y2={`${tp.position.Y}%`}
+                                                            x2={`${lineTpPosition.X}%`}
+                                                            y2={`${lineTpPosition.Y}%`}
                                                             stroke="#4CAF50"
                                                             strokeWidth="2"
                                                             strokeDasharray="5,5"
                                                             opacity="0.8"
                                                         />
-                                                    ))}
+                                                        );
+                                                    })}
                                                 </svg>
                                                 {/* Throwing point buttons */}
-                                                {item.throwingPoints.map((tp) => (
+                                                {item.throwingPoints.map((tp) => {
+                                                    const isTpDragging = isDraggingTP && draggedTP?.id === tp.id;
+                                                    const isTpPending = isTPDragPending && draggedTP?.id === tp.id;
+                                                    // Prefer live dragged position so the dot tracks the cursor
+                                                    const tpPosition = isTpDragging && draggedTP
+                                                        ? draggedTP.position
+                                                        : tp.position;
+                                                    return (
                                                     <button
-                                                        key={tp.id || `${tp.position.X}-${tp.position.Y}`}
-                                                        className={`utility-tp-button ${isDraggingTP && draggedTP === tp ? 'dragging' : ''} ${isTPDragPending && draggedTP === tp ? 'pending-drag' : ''}`}
+                                                        key={tp.id}
+                                                        className={`utility-tp-button ${isTpDragging ? 'dragging' : ''} ${isTpPending ? 'pending-drag' : ''}`}
                                                         onClick={(e) => handleTPClick(tp, e)}
                                                         onMouseDown={(e) => handleTPMouseDown(tp, e)}
                                                         onMouseUp={() => handleTPDragEnd()}
                                                         onMouseEnter={(e) => handleTPHover(tp, e)}
                                                         onMouseLeave={() => {
                                                             handleTPLeave();
+                                                            if (isDraggingTP) return;
                                                             if (isTPDragPending) {
                                                                 if (tpDragStartTimeout) {
                                                                     clearTimeout(tpDragStartTimeout);
@@ -2130,18 +2151,21 @@ const MapViewerInner = (props: MapViewerProps) => {
                                                                 }
                                                                 setIsTPDragPending(false);
                                                                 setDraggedTP(null);
-                                                                setDraggedTPAssociatedLPId(null);
+                                                                // Keep LP selected if user aborts pending drag
                                                             }
                                                         }}
                                                         style={{
-                                                            left: `${tp.position.X}%`,
-                                                            top: `${tp.position.Y}%`,
+                                                            left: `${tpPosition.X}%`,
+                                                            top: `${tpPosition.Y}%`,
                                                             transform: `translate(-50%, -50%) scale(${1 / zoom})`,
-                                                            zIndex: isDraggingTP && draggedTP === tp ? 1000 : 'auto'
+                                                            zIndex: isTpDragging ? 1000 : 'auto',
+                                                            cursor: isTpDragging ? 'grabbing' : 'grab',
+                                                            transition: isTpDragging ? 'none' : undefined
                                                         }}
-                                                        title="Click to open, hold for 1.5s to drag"
+                                                        title="Click to open, hold briefly to drag"
                                                     />
-                                                ))}
+                                                    );
+                                                })}
                                             </>
                                         )}
                                     </div>)

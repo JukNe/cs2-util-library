@@ -22,7 +22,7 @@ A comprehensive web application for Counter-Strike 2 players to create, manage, 
 
 ### 📸 **Media Integration**
 - **Image & Video Support**: Upload screenshots, videos, and GIFs for utilities
-- **Visual Learning**: Attach media to both utility landing and throwing points
+- **Media Attachments**: Attach media to both utility landing and throwing points
 - **Cloud Storage**: Secure media storage with Vercel Blob
 
 ### 🔗 **Sharing System**
