@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import { UnknownError, VerificationError } from '@/types/errors';
 
 interface UseEmailVerificationReturn {
   resendVerification: (email: string) => Promise<void>;
@@ -20,13 +19,6 @@ interface UseUserLimitsReturn {
   isLoading: boolean;
   error: string | null;
   refreshLimits: () => Promise<void>;
-}
-
-interface UseVerificationErrorReturn {
-  handleApiError: (error: UnknownError) => boolean;
-  showVerificationPrompt: boolean;
-  verificationError: VerificationError | null;
-  closeVerificationPrompt: () => void;
 }
 
 export const useEmailVerification = (): UseEmailVerificationReturn => {
@@ -106,41 +98,5 @@ export const useUserLimits = (): UseUserLimitsReturn => {
     isLoading,
     error,
     refreshLimits
-  };
-};
-
-export const useVerificationError = (): UseVerificationErrorReturn => {
-  const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
-  const [verificationError, setVerificationError] = useState<VerificationError | null>(null);
-
-  const handleApiError = useCallback((error: UnknownError) => {
-    // Check if the error requires verification
-    if (error?.requiresVerification ||
-      error?.message?.includes('verify your email') ||
-      error?.error?.includes('verify your email')) {
-      // Create a proper VerificationError object
-      const verificationError: VerificationError = {
-        success: false,
-        error: error.error || error.message || 'Verification required',
-        requiresVerification: true,
-        message: error.message
-      };
-      setVerificationError(verificationError);
-      setShowVerificationPrompt(true);
-      return true; // Error was handled
-    }
-    return false; // Error was not handled
-  }, []);
-
-  const closeVerificationPrompt = useCallback(() => {
-    setShowVerificationPrompt(false);
-    setVerificationError(null);
-  }, []);
-
-  return {
-    handleApiError,
-    showVerificationPrompt,
-    verificationError,
-    closeVerificationPrompt
   };
 }; 

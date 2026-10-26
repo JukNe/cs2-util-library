@@ -874,8 +874,6 @@ const MapViewerInner = (props: MapViewerProps) => {
             }
 
             // Position saved successfully
-            console.log('Landing point position updated successfully');
-
         } catch (error) {
             console.error('Error updating landing point position:', error);
             alert('Failed to save position. Please try again.');
@@ -1007,8 +1005,6 @@ const MapViewerInner = (props: MapViewerProps) => {
             if (!result.success) {
                 throw new Error(result.error || 'Failed to update position');
             }
-
-            console.log('Throwing point position updated successfully');
 
         } catch (error) {
             console.error('Error updating throwing point position:', error);
@@ -2107,7 +2103,7 @@ const MapViewerInner = (props: MapViewerProps) => {
                                                 >
                                                     {item.throwingPoints.map((tp) => {
                                                         const lineTpPosition =
-                                                            isDraggingTP && draggedTP?.id === tp.id
+                                                            isDraggingTP && draggedTP && draggedTP.id === tp.id
                                                                 ? draggedTP.position
                                                                 : tp.position;
                                                         return (

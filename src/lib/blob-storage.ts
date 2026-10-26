@@ -1,4 +1,4 @@
-import { put, del, head, PutBlobResult } from '@vercel/blob';
+import { put, del, PutBlobResult } from '@vercel/blob';
 import prisma from './prisma';
 import type { Media } from '@/generated/prisma/client';
 
@@ -86,18 +86,6 @@ export async function deleteBlobFromDatabase(mediaId: string): Promise<void> {
     });
   } catch (error) {
     console.error('Error deleting blob:', error);
-    throw error;
-  }
-}
-
-/**
- * Get blob details from Vercel Blob storage
- */
-export async function getBlobDetails(url: string) {
-  try {
-    return await head(url);
-  } catch (error) {
-    console.error('Error getting blob details:', error);
     throw error;
   }
 }

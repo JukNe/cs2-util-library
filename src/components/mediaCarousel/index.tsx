@@ -35,12 +35,15 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
 }, ref) => {
     const [media, setMedia] = useState<Media[]>([]);
     const [loading, setLoading] = useState(true);
+    const [imageLoaded, setImageLoaded] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [deleting, setDeleting] = useState<string | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isAttacherVisible, setIsAttacherVisible] = useState(false);
 
     const fetchMedia = useCallback(async () => {
+        setLoading(true);
+        setImageLoaded(false);
         try {
             const params = new URLSearchParams();
             if (utilityId) params.append('utilityId', utilityId);
@@ -105,18 +108,21 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
     };
 
     const nextSlide = useCallback(() => {
+        setImageLoaded(false);
         setCurrentIndex((prevIndex) =>
             prevIndex === media.length - 1 ? 0 : prevIndex + 1
         );
     }, [media.length]);
 
     const prevSlide = useCallback(() => {
+        setImageLoaded(false);
         setCurrentIndex((prevIndex) =>
             prevIndex === 0 ? media.length - 1 : prevIndex - 1
         );
     }, [media.length]);
 
     const goToSlide = (index: number) => {
+        setImageLoaded(false);
         setCurrentIndex(index);
     };
 
@@ -147,6 +153,7 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
     useEffect(() => {
         // Reset current index when media changes
         setCurrentIndex(0);
+        setImageLoaded(false);
     }, [media.length]);
 
     useEffect(() => {
@@ -165,7 +172,15 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
     }, [isFullscreen, handleKeyDown]);
 
     if (loading) {
-        return <div className="carousel-loading">Loading media...</div>;
+        return (
+            <div className="media-carousel">
+                <div className="carousel-loading">
+                    <div className="media-loading-spinner" aria-label="Loading media">
+                        <div className="spinner" />
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     const handleMediaDescriptionChange = (mediaId: string, description: string) => {
@@ -177,21 +192,30 @@ const MediaCarousel = forwardRef<MediaCarouselRef, MediaCarouselProps>(({
 
     const renderMedia = (mediaItem: Media, isFullscreenMode: boolean = false) => (
         <div className={`carousel-media ${isFullscreenMode ? 'fullscreen-media' : ''}`}>
+            {(mediaItem.type === 'image' || mediaItem.type === 'gif') && !imageLoaded && (
+                <div className="media-loading-spinner" aria-label="Loading image">
+                    <div className="spinner" />
+                </div>
+            )}
             {mediaItem.type === 'image' || mediaItem.type === 'gif' ? (
                 <Image
+                    key={mediaItem.id}
                     src={mediaItem.url}
                     alt={mediaItem.title || 'Media'}
-                    width={0}
-                    height={0}
-                    layout="fill"
+                    fill
+                    sizes="100vw"
                     unoptimized
-                    className={`carousel-image ${isFullscreenMode ? 'fullscreen-image' : ''}`}
+                    onLoad={() => setImageLoaded(true)}
+                    onLoadingComplete={() => setImageLoaded(true)}
+                    onError={() => setImageLoaded(true)}
+                    className={`carousel-image ${isFullscreenMode ? 'fullscreen-image' : ''} ${imageLoaded ? 'is-loaded' : ''}`}
                 />
             ) : (
                 <video
                     src={mediaItem.url}
                     controls
                     className={`carousel-video ${isFullscreenMode ? 'fullscreen-video' : ''}`}
+                    onLoadedData={() => setImageLoaded(true)}
                 />
             )}
 

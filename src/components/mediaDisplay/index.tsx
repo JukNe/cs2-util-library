@@ -15,6 +15,8 @@ const MediaDisplay = ({ media, onMediaDeleted }: MediaDisplayProps) => {
     const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
     const [selectedMediaIndex, setSelectedMediaIndex] = useState<number>(-1);
     const [deletingMedia, setDeletingMedia] = useState<string | null>(null);
+    const [modalImageLoaded, setModalImageLoaded] = useState(false);
+    const [loadedThumbnails, setLoadedThumbnails] = useState<Record<string, boolean>>({});
 
     const getMediaContext = (mediaItem: Media) => {
         if (mediaItem.utility) {
@@ -36,6 +38,7 @@ const MediaDisplay = ({ media, onMediaDeleted }: MediaDisplayProps) => {
 
     const handleMediaClick = (mediaItem: Media) => {
         const index = media.findIndex(item => item.id === mediaItem.id);
+        setModalImageLoaded(false);
         setSelectedMedia(mediaItem);
         setSelectedMediaIndex(index);
     };
@@ -48,6 +51,7 @@ const MediaDisplay = ({ media, onMediaDeleted }: MediaDisplayProps) => {
     const navigateToPrevious = useCallback(() => {
         if (selectedMediaIndex > 0) {
             const newIndex = selectedMediaIndex - 1;
+            setModalImageLoaded(false);
             setSelectedMediaIndex(newIndex);
             setSelectedMedia(media[newIndex]);
         }
@@ -56,6 +60,7 @@ const MediaDisplay = ({ media, onMediaDeleted }: MediaDisplayProps) => {
     const navigateToNext = useCallback(() => {
         if (selectedMediaIndex < media.length - 1) {
             const newIndex = selectedMediaIndex + 1;
+            setModalImageLoaded(false);
             setSelectedMediaIndex(newIndex);
             setSelectedMedia(media[newIndex]);
         }
@@ -138,6 +143,11 @@ const MediaDisplay = ({ media, onMediaDeleted }: MediaDisplayProps) => {
                         onClick={() => handleMediaClick(mediaItem)}
                     >
                         <div className="media-preview">
+                            {!loadedThumbnails[mediaItem.id] && mediaItem.type !== 'video' && (
+                                <div className="media-loading-spinner" aria-label="Loading image">
+                                    <div className="spinner" />
+                                </div>
+                            )}
                             {mediaItem.type === 'video' ? (
                                 <video
                                     src={mediaItem.url}
@@ -152,7 +162,9 @@ const MediaDisplay = ({ media, onMediaDeleted }: MediaDisplayProps) => {
                                     alt={mediaItem.title || 'Media'}
                                     width={200}
                                     height={150}
-                                    className="media-thumbnail"
+                                    unoptimized
+                                    onLoad={() => setLoadedThumbnails(prev => ({ ...prev, [mediaItem.id]: true }))}
+                                    className={`media-thumbnail ${loadedThumbnails[mediaItem.id] ? 'is-loaded' : ''}`}
                                 />
                             )}
                             <button
@@ -222,6 +234,11 @@ const MediaDisplay = ({ media, onMediaDeleted }: MediaDisplayProps) => {
                         )}
 
                         <div className="modal-media">
+                            {selectedMedia.type !== 'video' && !modalImageLoaded && (
+                                <div className="media-loading-spinner" aria-label="Loading image">
+                                    <div className="spinner" />
+                                </div>
+                            )}
                             {selectedMedia.type === 'video' ? (
                                 <video
                                     src={selectedMedia.url}
@@ -230,13 +247,13 @@ const MediaDisplay = ({ media, onMediaDeleted }: MediaDisplayProps) => {
                                 />
                             ) : (
                                 <Image
-                                    width={0}
-                                    height={0}
+                                    fill
+                                    sizes="100vw"
                                     unoptimized
-                                    layout="fill"
                                     src={selectedMedia.url}
                                     alt={selectedMedia.title || 'Media'}
-                                    className="modal-image"
+                                    onLoad={() => setModalImageLoaded(true)}
+                                    className={`modal-image ${modalImageLoaded ? 'is-loaded' : ''}`}
                                 />
                             )}
                         </div>
