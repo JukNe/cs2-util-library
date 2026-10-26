@@ -5,9 +5,16 @@ import bcrypt from 'bcryptjs';
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { email, password, rememberMe } = body;
+        const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+        const password = typeof body.password === 'string' ? body.password : '';
+        const rememberMe = Boolean(body.rememberMe);
 
-        
+        if (!email || !password) {
+            return NextResponse.json({
+                success: false,
+                error: "Invalid email or password"
+            }, { status: 401 });
+        }
 
         // Find user by email
         const user = await prisma.user.findUnique({
@@ -15,7 +22,6 @@ export async function POST(request: NextRequest) {
         });
 
         if (!user) {
-    
             return NextResponse.json({
                 success: false,
                 error: "Invalid email or password"
@@ -26,7 +32,6 @@ export async function POST(request: NextRequest) {
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
-    
             return NextResponse.json({
                 success: false,
                 error: "Invalid email or password"
@@ -77,8 +82,8 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error('Signin error:', error);
         return NextResponse.json(
-            { success: false, error: 'Invalid email or password' },
-            { status: 401 }
+            { success: false, error: 'Unable to sign in. Please try again.' },
+            { status: 500 }
         );
     }
 }
