@@ -1,6 +1,6 @@
 import { put, del, head, PutBlobResult } from '@vercel/blob';
 import prisma from './prisma';
-import { Media } from '@/generated/prisma/index';
+import type { Media } from '@/generated/prisma/client';
 
 export interface UploadBlobOptions {
   filename: string;

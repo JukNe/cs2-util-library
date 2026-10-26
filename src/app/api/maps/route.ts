@@ -31,9 +31,9 @@ export async function GET(request: NextRequest) {
             orderBy: { displayName: 'asc' }
         });
 
-        const mapData = mapsWithCounts.map(map => ({
+        const mapData = mapsWithCounts.map((map) => ({
             mapName: map.name,
-            totalUtilities: map._count.utilities
+            totalUtilities: map._count.utilities,
         }));
 
         return NextResponse.json({
